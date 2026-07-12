@@ -36,8 +36,12 @@ export default async function DashboardPage() {
       value: locationCount.value,
       href: "/locations",
     },
-    { label: "Open tasks", value: openTasks.value, href: "/" },
-    { label: "Content ready to publish", value: readyContent.value, href: "/" },
+    { label: "Open tasks", value: openTasks.value, href: "/tasks" },
+    {
+      label: "Content ready to publish",
+      value: readyContent.value,
+      href: "/content?status=ready",
+    },
   ];
 
   return (
