@@ -21,7 +21,7 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <header className="border-b border-gray-200 bg-white print:hidden dark:border-gray-800 dark:bg-gray-900">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-6">
             <Link href="/" className="font-semibold">

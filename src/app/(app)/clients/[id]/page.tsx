@@ -40,9 +40,14 @@ export default async function ClientDetailPage({
         title={client.name}
         subtitle={client.notes ?? undefined}
         actions={
-          <LinkButton href={`/locations/new?clientId=${client.id}`}>
-            Add location
-          </LinkButton>
+          <>
+            <LinkButton href={`/clients/${client.id}/report`} variant="secondary">
+              Monthly report
+            </LinkButton>
+            <LinkButton href={`/locations/new?clientId=${client.id}`}>
+              Add location
+            </LinkButton>
+          </>
         }
       />
       <div className="mb-4">

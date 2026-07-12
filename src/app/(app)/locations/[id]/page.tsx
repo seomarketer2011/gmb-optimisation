@@ -12,8 +12,10 @@ import {
   statusBadgeColor,
 } from "@/components/ui";
 import { LocationFields, SubmitRow } from "@/components/location-form";
+import { healthScore, healthColor } from "@/lib/scores";
 import { updateLocation } from "../actions";
 import { setupStandardOpsPlan } from "../../tasks/actions";
+import { startAudit } from "../../audits/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -66,8 +68,25 @@ export default async function LocationDetailPage({
   const open = openTasks;
   const locationContent = content;
 
+  const audits = await db
+    .select()
+    .from(schema.audits)
+    .where(eq(schema.audits.locationId, id))
+    .orderBy(desc(schema.audits.startedAt));
+  const latestCompleted = audits.find((a) => a.status === "completed");
+  const runningAudit = audits.find((a) => a.status === "in_progress");
+  let health: number | null = null;
+  if (latestCompleted) {
+    const auditFindings = await db
+      .select()
+      .from(schema.findings)
+      .where(eq(schema.findings.auditId, latestCompleted.id));
+    health = healthScore(auditFindings);
+  }
+
   const update = updateLocation.bind(null, location.id);
   const setupPlan = setupStandardOpsPlan.bind(null, location.id);
+  const runAudit = startAudit.bind(null, location.id);
 
   return (
     <div>
@@ -103,10 +122,13 @@ export default async function LocationDetailPage({
           </>
         }
       />
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <Badge color={statusBadgeColor(location.status)}>
           {location.status}
         </Badge>
+        {health !== null && (
+          <Badge color={healthColor(health)}>Health: {health}%</Badge>
+        )}
         {location.gbpUrl && (
           <a
             href={location.gbpUrl}
@@ -117,6 +139,45 @@ export default async function LocationDetailPage({
             Open GBP listing ↗
           </a>
         )}
+        <span className="text-sm text-gray-400">·</span>
+        {runningAudit ? (
+          <Link
+            href={`/audits/${runningAudit.id}`}
+            className="text-sm font-medium text-blue-600 hover:underline"
+          >
+            Continue audit in progress →
+          </Link>
+        ) : (
+          <form action={runAudit}>
+            <button
+              type="submit"
+              className="text-sm font-medium text-blue-600 hover:underline"
+            >
+              Run audit
+            </button>
+          </form>
+        )}
+        {latestCompleted && (
+          <Link
+            href={`/audits/${latestCompleted.id}`}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Last audit (
+            {latestCompleted.completedAt?.toISOString().slice(0, 10)})
+          </Link>
+        )}
+        <Link
+          href={`/locations/${location.id}/changes`}
+          className="text-sm text-blue-600 hover:underline"
+        >
+          Change log
+        </Link>
+        <Link
+          href={`/locations/${location.id}/metrics`}
+          className="text-sm text-blue-600 hover:underline"
+        >
+          Metrics
+        </Link>
       </div>
 
       <div className="mb-6 grid gap-4 lg:grid-cols-2">

@@ -82,10 +82,12 @@ Key design decisions (agreed in planning):
 ## Roadmap
 
 - [x] Foundation: auth, clients/locations CRUD, CSV import, seeded templates
-- [ ] Task board + recurring VA work queue
-- [ ] Content library (prepared posts/replies, copy-to-clipboard, statuses)
-- [ ] Audit runner (findings → prefilled tasks with duplicate detection)
-- [ ] Evidence upload to R2, change log UI with approval gate
-- [ ] Dashboard alerts, metric snapshots, printable monthly client report
+- [x] Task board + recurring VA work queue (complete-and-schedule-next)
+- [x] Content library (prepared posts/replies, copy-to-clipboard, statuses)
+- [x] Audit runner (findings → prefilled tasks with duplicate detection,
+      health score from weighted findings)
+- [x] Evidence upload to R2, change log UI with approval gate
+- [x] Metric snapshots, printable monthly client report with MoM deltas
+- [ ] Dashboard alerts (overdue, pending approvals, stale locations)
 - [ ] Google Business Profile API integration (OAuth, review import,
       scheduled post publishing) behind an adapter layer
