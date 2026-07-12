@@ -14,8 +14,8 @@
     "db:migrate:local": "wrangler d1 migrations apply gmb-optimisation --local",
     "db:migrate:remote": "wrangler d1 migrations apply gmb-optimisation --remote",
     "db:seed:build": "tsx scripts/build-seed-sql.ts",
-    "db:seed:local": "tsx scripts/build-seed-sql.ts && wrangler d1 execute gmb-optimisation --local --file=./drizzle/seed.sql",
-    "db:seed:remote": "tsx scripts/build-seed-sql.ts && wrangler d1 execute gmb-optimisation --remote --file=./drizzle/seed.sql"
+    "db:seed:local": "tsx scripts/build-seed-sql.ts && wrangler d1 execute gmb-optimisation --local --file=./.seed/seed.sql",
+    "db:seed:remote": "tsx scripts/build-seed-sql.ts && wrangler d1 execute gmb-optimisation --remote --file=./.seed/seed.sql"
   },
   "dependencies": {
     "better-auth": "^1.6.23",

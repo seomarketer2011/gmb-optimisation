@@ -114,6 +114,6 @@ for (const file of readdirSync(taskDir).filter((f) => f.endsWith(".json"))) {
   }
 }
 
-mkdirSync(join(root, "drizzle"), { recursive: true });
-writeFileSync(join(root, "drizzle", "seed.sql"), lines.join("\n") + "\n");
-console.log(`Wrote drizzle/seed.sql (${lines.length - 1} statements)`);
+mkdirSync(join(root, ".seed"), { recursive: true });
+writeFileSync(join(root, ".seed", "seed.sql"), lines.join("\n") + "\n");
+console.log(`Wrote .seed/seed.sql (${lines.length - 1} statements)`);

@@ -20,6 +20,9 @@ export async function GET(
   }
 
   const { env } = await getCloudflareContext({ async: true });
+  if (!env.EVIDENCE) {
+    return new Response("File storage is not configured", { status: 503 });
+  }
   const object = await env.EVIDENCE.get(evidence.storageKey);
   if (!object) return new Response("File missing from storage", { status: 404 });
 

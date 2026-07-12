@@ -4,6 +4,7 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2025-06-01",
   "compatibility_flags": ["nodejs_compat"],
+  "account_id": "44799b719f2192a9f066f425aaff3106",
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
@@ -12,19 +13,21 @@
     {
       "binding": "DB",
       "database_name": "gmb-optimisation",
-      // Replace with the real ID after running: wrangler d1 create gmb-optimisation
-      "database_id": "local-placeholder",
+      "database_id": "5066be67-f3b6-4b04-85dc-df3892366e03",
       "migrations_dir": "drizzle"
     }
   ],
-  "r2_buckets": [
-    {
-      "binding": "EVIDENCE",
-      "bucket_name": "gmb-evidence"
-    }
-  ],
+  // R2 is not yet enabled on this account. Once enabled in the dashboard
+  // (R2 > Enable), run `wrangler r2 bucket create gmb-evidence`, uncomment
+  // this block and redeploy — evidence file uploads then start working.
+  // "r2_buckets": [
+  //   {
+  //     "binding": "EVIDENCE",
+  //     "bucket_name": "gmb-evidence"
+  //   }
+  // ],
   "vars": {
-    "BETTER_AUTH_URL": "http://localhost:3000"
+    "BETTER_AUTH_URL": "https://gmb-optimisation.seomarketer2011.workers.dev"
   }
   // Set the auth secret with: wrangler secret put BETTER_AUTH_SECRET
   // For local dev it lives in .dev.vars (not committed)

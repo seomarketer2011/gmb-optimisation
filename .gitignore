@@ -45,4 +45,4 @@ next-env.d.ts
 .wrangler/
 .open-next/
 .data/
-drizzle/seed.sql
+.seed/

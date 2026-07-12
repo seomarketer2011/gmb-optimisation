@@ -44,6 +44,12 @@ export async function POST(request: Request) {
   const storageKey = `evidence/${taskId}/${crypto.randomUUID()}-${safeName}`;
 
   const { env } = await getCloudflareContext({ async: true });
+  if (!env.EVIDENCE) {
+    return new Response(
+      "File storage is not configured yet (enable R2 on the Cloudflare account). Use notes/links for now.",
+      { status: 503 },
+    );
+  }
   await env.EVIDENCE.put(storageKey, await file.arrayBuffer(), {
     httpMetadata: { contentType: file.type },
   });
