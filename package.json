@@ -1,0 +1,45 @@
+{
+  "name": "gmb-optimisation",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply gmb-optimisation --local",
+    "db:migrate:remote": "wrangler d1 migrations apply gmb-optimisation --remote",
+    "db:seed:build": "tsx scripts/build-seed-sql.ts",
+    "db:seed:local": "tsx scripts/build-seed-sql.ts && wrangler d1 execute gmb-optimisation --local --file=./drizzle/seed.sql",
+    "db:seed:remote": "tsx scripts/build-seed-sql.ts && wrangler d1 execute gmb-optimisation --remote --file=./drizzle/seed.sql"
+  },
+  "dependencies": {
+    "better-auth": "^1.6.23",
+    "drizzle-orm": "^0.45.2",
+    "next": "16.2.10",
+    "papaparse": "^5.5.4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.1",
+    "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^20",
+    "@types/papaparse": "^5.5.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "better-sqlite3": "^12.11.1",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.0",
+    "typescript": "^5",
+    "wrangler": "^4.110.0"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gmb-optimisation",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gmb-optimisation",
+      // Replace with the real ID after running: wrangler d1 create gmb-optimisation
+      "database_id": "local-placeholder",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "EVIDENCE",
+      "bucket_name": "gmb-evidence"
+    }
+  ],
+  "vars": {
+    "BETTER_AUTH_URL": "http://localhost:3000"
+  }
+  // Set the auth secret with: wrangler secret put BETTER_AUTH_SECRET
+  // For local dev it lives in .dev.vars (not committed)
+}
