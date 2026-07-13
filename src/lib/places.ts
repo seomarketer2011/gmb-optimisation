@@ -78,26 +78,69 @@ function extractQuery(mapsUrl: string): {
   return { textQuery, lat, lng };
 }
 
-type PlacesTextSearchResponse = {
-  places?: Array<{
-    id: string;
-    displayName?: { text?: string };
-    formattedAddress?: string;
-    addressComponents?: Array<{
-      longText?: string;
-      types?: string[];
-    }>;
-    nationalPhoneNumber?: string;
-    websiteUri?: string;
-    primaryTypeDisplayName?: { text?: string };
+type PlaceResource = {
+  id: string;
+  displayName?: { text?: string };
+  formattedAddress?: string;
+  addressComponents?: Array<{
+    longText?: string;
     types?: string[];
-    rating?: number;
-    userRatingCount?: number;
-    googleMapsUri?: string;
-    regularOpeningHours?: { weekdayDescriptions?: string[] };
   }>;
+  nationalPhoneNumber?: string;
+  websiteUri?: string;
+  primaryTypeDisplayName?: { text?: string };
+  types?: string[];
+  rating?: number;
+  userRatingCount?: number;
+  googleMapsUri?: string;
+  regularOpeningHours?: { weekdayDescriptions?: string[] };
+};
+
+type PlacesTextSearchResponse = {
+  places?: PlaceResource[];
   error?: { message?: string; status?: string };
 };
+
+const PLACE_FIELDS = [
+  "id",
+  "displayName",
+  "formattedAddress",
+  "addressComponents",
+  "nationalPhoneNumber",
+  "websiteUri",
+  "primaryTypeDisplayName",
+  "types",
+  "rating",
+  "userRatingCount",
+  "googleMapsUri",
+  "regularOpeningHours",
+] as const;
+
+function mapPlace(
+  place: PlaceResource,
+  fallbackName: string,
+  fallbackUrl: string,
+): GbpLookupResult {
+  const comp = (type: string) =>
+    place.addressComponents?.find((c) => c.types?.includes(type))?.longText ??
+    null;
+
+  return {
+    placeId: place.id,
+    name: place.displayName?.text ?? fallbackName,
+    address: place.formattedAddress ?? null,
+    city: comp("postal_town") ?? comp("locality") ?? null,
+    postcode: comp("postal_code"),
+    phone: place.nationalPhoneNumber ?? null,
+    website: place.websiteUri ?? null,
+    gbpUrl: place.googleMapsUri ?? fallbackUrl,
+    primaryCategory: place.primaryTypeDisplayName?.text ?? null,
+    types: place.types ?? [],
+    rating: place.rating ?? null,
+    reviewCount: place.userRatingCount ?? null,
+    hours: place.regularOpeningHours?.weekdayDescriptions ?? [],
+  };
+}
 
 export async function lookupGbpFromUrl(
   inputUrl: string,
@@ -131,8 +174,7 @@ export async function lookupGbpFromUrl(
     headers: {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask":
-        "places.id,places.displayName,places.formattedAddress,places.addressComponents,places.nationalPhoneNumber,places.websiteUri,places.primaryTypeDisplayName,places.types,places.rating,places.userRatingCount,places.googleMapsUri,places.regularOpeningHours",
+      "X-Goog-FieldMask": PLACE_FIELDS.map((f) => `places.${f}`).join(","),
     },
     body: JSON.stringify(body),
   });
@@ -152,26 +194,35 @@ export async function lookupGbpFromUrl(
     };
   }
 
-  const comp = (type: string) =>
-    place.addressComponents?.find((c) => c.types?.includes(type))?.longText ??
-    null;
+  return { ok: true, data: mapPlace(place, textQuery, mapsUrl) };
+}
 
-  return {
-    ok: true,
-    data: {
-      placeId: place.id,
-      name: place.displayName?.text ?? textQuery,
-      address: place.formattedAddress ?? null,
-      city: comp("postal_town") ?? comp("locality") ?? null,
-      postcode: comp("postal_code"),
-      phone: place.nationalPhoneNumber ?? null,
-      website: place.websiteUri ?? null,
-      gbpUrl: place.googleMapsUri ?? mapsUrl,
-      primaryCategory: place.primaryTypeDisplayName?.text ?? null,
-      types: place.types ?? [],
-      rating: place.rating ?? null,
-      reviewCount: place.userRatingCount ?? null,
-      hours: place.regularOpeningHours?.weekdayDescriptions ?? [],
+/**
+ * Fetch a listing's current public data directly by Place ID — deterministic,
+ * so drift checks always compare against the same listing.
+ */
+export async function fetchPlaceDetails(
+  placeId: string,
+  apiKey: string,
+): Promise<{ ok: true; data: GbpLookupResult } | { ok: false; error: string }> {
+  const res = await fetch(
+    `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
+    {
+      headers: {
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": PLACE_FIELDS.join(","),
+      },
     },
+  );
+
+  const json = (await res.json()) as PlaceResource & {
+    error?: { message?: string };
   };
+  if (!res.ok) {
+    return {
+      ok: false,
+      error: `Places API error: ${json.error?.message ?? res.status}`,
+    };
+  }
+  return { ok: true, data: mapPlace(json, "", "") };
 }

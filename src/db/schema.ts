@@ -113,6 +113,9 @@ export const locations = sqliteTable(
     phone: text("phone"),
     website: text("website"),
     gbpUrl: text("gbp_url"),
+    // Google Place ID — set at import, lets us re-fetch the live listing
+    // deterministically for data-protection checks
+    placeId: text("place_id"),
     primaryCategory: text("primary_category"),
     secondaryCategories: text("secondary_categories"), // comma-separated
     serviceAreas: text("service_areas"),
@@ -385,6 +388,80 @@ export const changes = sqliteTable(
     notes: text("notes"),
   },
   (t) => [index("changes_location_idx").on(t.locationId)],
+);
+
+// ---------------------------------------------------------------------------
+// Listing protection — the confirmed source-of-truth for each property's
+// critical GBP data, re-checked against the live listing to catch Google
+// "suggested edits" (or anyone else) silently changing our data
+// ---------------------------------------------------------------------------
+
+export const gbpBaselines = sqliteTable(
+  "gbp_baselines",
+  {
+    id: uuid(),
+    locationId: text("location_id")
+      .notNull()
+      .references(() => locations.id, { onDelete: "cascade" }),
+    businessName: text("business_name").notNull(),
+    address: text("address"),
+    phone: text("phone"),
+    primaryCategory: text("primary_category"),
+    hours: text("hours"), // JSON array of weekday descriptions, Monday first
+    confirmedBy: text("confirmed_by").references(() => user.id),
+    confirmedAt: integer("confirmed_at", { mode: "timestamp" }).notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("gbp_baselines_location_unique").on(t.locationId)],
+);
+
+export const integrityChecks = sqliteTable(
+  "integrity_checks",
+  {
+    id: uuid(),
+    locationId: text("location_id")
+      .notNull()
+      .references(() => locations.id, { onDelete: "cascade" }),
+    status: text("status").notNull(), // ok | drift | error
+    driftFields: text("drift_fields"), // comma-separated field keys that changed
+    liveSnapshot: text("live_snapshot"), // JSON of the fetched live values
+    error: text("error"),
+    runBy: text("run_by").references(() => user.id),
+    runAt: integer("run_at", { mode: "timestamp" })
+      .$defaultFn(() => new Date())
+      .notNull(),
+  },
+  (t) => [index("integrity_checks_location_idx").on(t.locationId)],
+);
+
+export const integrityAlerts = sqliteTable(
+  "integrity_alerts",
+  {
+    id: uuid(),
+    locationId: text("location_id")
+      .notNull()
+      .references(() => locations.id, { onDelete: "cascade" }),
+    checkId: text("check_id").references(() => integrityChecks.id, {
+      onDelete: "set null",
+    }),
+    field: text("field").notNull(), // business_name | address | phone | hours | primary_category
+    expectedValue: text("expected_value"),
+    liveValue: text("live_value"),
+    status: text("status").default("open").notNull(), // open | resolved | dismissed
+    // Auto-created "restore correct data" task for the VA queue
+    taskId: text("task_id").references(() => tasks.id, {
+      onDelete: "set null",
+    }),
+    resolvedBy: text("resolved_by").references(() => user.id),
+    resolvedAt: integer("resolved_at", { mode: "timestamp" }),
+    notes: text("notes"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("integrity_alerts_location_idx").on(t.locationId),
+    index("integrity_alerts_status_idx").on(t.status),
+  ],
 );
 
 // ---------------------------------------------------------------------------

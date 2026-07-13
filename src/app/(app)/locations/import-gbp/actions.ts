@@ -45,6 +45,7 @@ export async function importGbpProperty(
       phone: data.phone,
       website: data.website,
       gbpUrl: data.gbpUrl,
+      placeId: data.placeId,
       primaryCategory: data.primaryCategory,
       status: "active",
       notes: [

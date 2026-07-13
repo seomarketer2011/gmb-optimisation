@@ -33,7 +33,7 @@ export default async function LocationDetailPage({
   });
   if (!location) notFound();
 
-  const [client, openTasks, content] = await Promise.all([
+  const [client, openTasks, content, openAlerts] = await Promise.all([
     db.query.clients.findFirst({
       where: eq(schema.clients.id, location.clientId),
     }),
@@ -63,6 +63,15 @@ export default async function LocationDetailPage({
         ),
       )
       .orderBy(desc(schema.contentItems.createdAt)),
+    db
+      .select()
+      .from(schema.integrityAlerts)
+      .where(
+        and(
+          eq(schema.integrityAlerts.locationId, id),
+          eq(schema.integrityAlerts.status, "open"),
+        ),
+      ),
   ]);
 
   const open = openTasks;
@@ -178,6 +187,20 @@ export default async function LocationDetailPage({
         >
           Change log
         </Link>
+        <Link
+          href={`/locations/${location.id}/protection`}
+          className="text-sm text-blue-600 hover:underline"
+        >
+          Data protection
+        </Link>
+        {openAlerts.length > 0 && (
+          <Link href={`/locations/${location.id}/protection`}>
+            <Badge color="red">
+              ⚠ {openAlerts.length} data alert
+              {openAlerts.length > 1 ? "s" : ""}
+            </Badge>
+          </Link>
+        )}
         <Link
           href={`/locations/${location.id}/metrics`}
           className="text-sm text-blue-600 hover:underline"

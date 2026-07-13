@@ -56,6 +56,30 @@ It needs a Google Maps Platform API key:
 
 Google's free tier comfortably covers this usage level.
 
+## Data protection (Google suggested edits)
+
+Google lets the public "suggest an edit" on any listing, and those edits can
+go live without warning — changed phone numbers, categories, hours, even the
+business name. The **Protection** page defends against this:
+
+1. Open a property → **Data protection** (or Protection in the nav). The form
+   pre-fills from the live listing; check business name, address, telephone
+   number, opening hours and primary category against reality, correct
+   anything wrong, and **confirm the baseline** (operator/admin only). This
+   becomes the source of truth for that property.
+2. **Run check now** (per property) or **Run all checks** (Protection page)
+   re-fetches each live listing via the Places API and compares it to the
+   baseline. Comparison is format-tolerant, so `+44 1273…` vs `01273…` or
+   spacing/case differences don't false-alarm.
+3. Any real difference opens an **alert** showing the correct value vs what
+   Google now shows, and drops an urgent P1 restore task into the VA queue
+   with step-by-step instructions. Resolve the alert once Google shows the
+   correct data again; dismiss it (operators, and update the baseline) if the
+   new value is actually right.
+
+Run "all checks" as part of the weekly profile-check cycle. Uses the same
+`GOOGLE_MAPS_API_KEY` as the importer.
+
 ## Seed content (the IP)
 
 Audit checklists and task templates live in `/data` as **versioned, immutable
@@ -80,7 +104,8 @@ with `npm run db:generate` into `/drizzle`.
 
 Tables: `user/session/account/verification` (auth), `clients`, `locations`,
 `audit_templates`, `audit_items`, `audits`, `findings`, `task_templates`,
-`tasks`, `task_evidence`, `content_items`, `changes`, `metric_snapshots`.
+`tasks`, `task_evidence`, `content_items`, `changes`, `metric_snapshots`,
+`gbp_baselines`, `integrity_checks`, `integrity_alerts` (data protection).
 
 Key design decisions (agreed in planning):
 
