@@ -40,6 +40,22 @@ Sign up at `/signup` — your first account is the admin.
 5. `npm run db:migrate:remote && npm run db:seed:remote`
 6. `npm run deploy`
 
+## Import from GBP URL
+
+"Import from GBP URL" (Properties page) pulls a live profile's public data
+(name, address, town, postcode, phone, website, primary category, hours,
+rating + review count) from any Maps link and self-populates a new property.
+It needs a Google Maps Platform API key:
+
+1. https://console.cloud.google.com → create/select a project
+2. APIs & Services → Library → enable **Places API (New)**
+3. APIs & Services → Credentials → Create credentials → API key
+   (restrict it to Places API (New))
+4. `npx wrangler secret put GOOGLE_MAPS_API_KEY` (paste the key)
+5. For local dev, put it in `.dev.vars`
+
+Google's free tier comfortably covers this usage level.
+
 ## Seed content (the IP)
 
 Audit checklists and task templates live in `/data` as **versioned, immutable

@@ -39,6 +39,9 @@ export default async function LocationsPage() {
             <LinkButton href="/locations/import" variant="secondary">
               Import CSV
             </LinkButton>
+            <LinkButton href="/locations/import-gbp" variant="secondary">
+              Import from GBP URL
+            </LinkButton>
             <LinkButton href="/locations/new">Add property</LinkButton>
           </>
         }
