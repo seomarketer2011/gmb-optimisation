@@ -66,7 +66,10 @@ business name. The **Protection** page defends against this:
    pre-fills from the live listing; check business name, address, telephone
    number, opening hours and primary category against reality, correct
    anything wrong, and **confirm the baseline** (operator/admin only). This
-   becomes the source of truth for that property.
+   becomes the source of truth for that property. The listing's **open/closed
+   status** and **map-pin location** are snapshotted automatically at confirm
+   time and monitored too (a temporary-closure or a moved pin both wreck local
+   ranking).
 2. **Run check now** (per property) or **Run all checks** (Protection page)
    re-fetches each live listing via the Places API and compares it to the
    baseline. Comparison is format-tolerant, so `+44 1273…` vs `01273…` or

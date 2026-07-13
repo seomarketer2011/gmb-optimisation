@@ -155,9 +155,10 @@ export default async function ProtectionOverviewPage() {
       )}
       <p className="mt-4 text-xs text-gray-500">
         Checks use the Places API and compare business name, address, phone,
-        primary category and opening hours. A detected change opens an alert
-        and creates an urgent restore task in the VA queue. Run &ldquo;all
-        checks&rdquo; as part of the weekly profile sweep.
+        primary category, opening hours, open/closed status and the map-pin
+        location. A detected change opens an alert and creates an urgent
+        restore task in the VA queue. Run &ldquo;all checks&rdquo; as part of
+        the weekly profile sweep.
       </p>
     </div>
   );

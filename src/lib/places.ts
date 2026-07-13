@@ -17,6 +17,9 @@ export type GbpLookupResult = {
   primaryCategory: string | null;
   secondaryCategories: string[]; // cleaned, human-readable (umbrella tags removed)
   types: string[]; // raw Google type ids, for reference
+  businessStatus: string | null; // OPERATIONAL | CLOSED_TEMPORARILY | CLOSED_PERMANENTLY
+  latitude: number | null; // map pin
+  longitude: number | null;
   rating: number | null;
   reviewCount: number | null;
   hours: string[];
@@ -137,6 +140,8 @@ type PlaceResource = {
   primaryType?: string;
   primaryTypeDisplayName?: { text?: string };
   types?: string[];
+  businessStatus?: string;
+  location?: { latitude?: number; longitude?: number };
   rating?: number;
   userRatingCount?: number;
   googleMapsUri?: string;
@@ -158,6 +163,8 @@ const PLACE_FIELDS = [
   "primaryType",
   "primaryTypeDisplayName",
   "types",
+  "businessStatus",
+  "location",
   "rating",
   "userRatingCount",
   "googleMapsUri",
@@ -189,6 +196,9 @@ function mapPlace(
       place.primaryTypeDisplayName?.text ?? null,
     ),
     types: place.types ?? [],
+    businessStatus: place.businessStatus ?? null,
+    latitude: place.location?.latitude ?? null,
+    longitude: place.location?.longitude ?? null,
     rating: place.rating ?? null,
     reviewCount: place.userRatingCount ?? null,
     hours: place.regularOpeningHours?.weekdayDescriptions ?? [],

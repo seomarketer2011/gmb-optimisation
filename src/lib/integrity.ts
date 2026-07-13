@@ -15,9 +15,15 @@ export const PROTECTED_FIELDS = [
   { key: "phone", label: "Phone number", risk: "medium" },
   { key: "primary_category", label: "Primary category", risk: "high" },
   { key: "hours", label: "Opening hours", risk: "low" },
+  { key: "business_status", label: "Open/closed status", risk: "high" },
+  { key: "map_pin", label: "Map pin location", risk: "high" },
 ] as const;
 
 export type ProtectedFieldKey = (typeof PROTECTED_FIELDS)[number]["key"];
+
+// A pin moved further than this (metres) is treated as tampering, not the
+// small rounding jitter Google returns for the same location.
+export const MAP_PIN_TOLERANCE_M = 50;
 
 export type BaselineValues = {
   businessName: string;
@@ -25,7 +31,46 @@ export type BaselineValues = {
   phone: string | null;
   primaryCategory: string | null;
   hours: string[]; // weekday descriptions, Monday first
+  businessStatus: string | null; // OPERATIONAL | CLOSED_TEMPORARILY | CLOSED_PERMANENTLY
+  latitude: number | null;
+  longitude: number | null;
 };
+
+/** Human-readable label for a Google businessStatus enum value. */
+export function businessStatusLabel(status: string | null): string {
+  switch ((status ?? "").toUpperCase()) {
+    case "OPERATIONAL":
+      return "Open";
+    case "CLOSED_TEMPORARILY":
+      return "Temporarily closed";
+    case "CLOSED_PERMANENTLY":
+      return "Permanently closed";
+    default:
+      return status || "—";
+  }
+}
+
+export function formatPin(lat: number | null, lng: number | null): string {
+  if (lat == null || lng == null) return "—";
+  return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+}
+
+/** Great-circle distance between two lat/lng points, in metres. */
+export function haversineMetres(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number,
+): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
 
 export type FieldDiff = {
   field: ProtectedFieldKey;
@@ -133,6 +178,34 @@ export function diffBaseline(
       hoursToText(baseline.hours),
       hoursToText(live.hours),
       normHours(baseline.hours) !== normHours(live.hours),
+    );
+  }
+
+  if (baseline.businessStatus) {
+    add(
+      "business_status",
+      businessStatusLabel(baseline.businessStatus),
+      businessStatusLabel(live.businessStatus),
+      (baseline.businessStatus ?? "").toUpperCase() !==
+        (live.businessStatus ?? "").toUpperCase(),
+    );
+  }
+
+  if (baseline.latitude != null && baseline.longitude != null) {
+    const moved =
+      live.latitude == null || live.longitude == null
+        ? true
+        : haversineMetres(
+            baseline.latitude,
+            baseline.longitude,
+            live.latitude,
+            live.longitude,
+          ) > MAP_PIN_TOLERANCE_M;
+    add(
+      "map_pin",
+      formatPin(baseline.latitude, baseline.longitude),
+      formatPin(live.latitude, live.longitude),
+      moved,
     );
   }
 

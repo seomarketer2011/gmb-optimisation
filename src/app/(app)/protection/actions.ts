@@ -40,19 +40,45 @@ export async function confirmBaseline(locationId: string, formData: FormData) {
     .map((l) => l.trim())
     .filter(Boolean);
 
+  const existing = await db.query.gbpBaselines.findFirst({
+    where: eq(schema.gbpBaselines.locationId, locationId),
+  });
+
+  // Open/closed status and the map pin aren't user-typed — snapshot them from
+  // the live listing at confirm time. If we can't reach Google, keep whatever
+  // an earlier confirm captured.
+  let businessStatus = existing?.businessStatus ?? null;
+  let latitude = existing?.latitude ?? null;
+  let longitude = existing?.longitude ?? null;
+  const location = await db.query.locations.findFirst({
+    where: eq(schema.locations.id, locationId),
+  });
+  const { env } = await getCloudflareContext({ async: true });
+  const apiKey = env.GOOGLE_MAPS_API_KEY;
+  if (apiKey && location && (location.placeId || location.gbpUrl)) {
+    const live = location.placeId
+      ? await fetchPlaceDetails(location.placeId, apiKey)
+      : await lookupGbpFromUrl(location.gbpUrl!, apiKey);
+    if (live.ok) {
+      businessStatus = live.data.businessStatus;
+      latitude = live.data.latitude;
+      longitude = live.data.longitude;
+    }
+  }
+
   const values = {
     businessName,
     address: str(formData.get("address")),
     phone: str(formData.get("phone")),
     primaryCategory: str(formData.get("primaryCategory")),
     hours: JSON.stringify(hours),
+    businessStatus,
+    latitude,
+    longitude,
     confirmedBy: session.user.id,
     confirmedAt: new Date(),
   };
 
-  const existing = await db.query.gbpBaselines.findFirst({
-    where: eq(schema.gbpBaselines.locationId, locationId),
-  });
   if (existing) {
     await db
       .update(schema.gbpBaselines)
@@ -105,6 +131,9 @@ async function checkOne(
     phone: baselineRow.phone,
     primaryCategory: baselineRow.primaryCategory,
     hours: parseBaselineHours(baselineRow.hours),
+    businessStatus: baselineRow.businessStatus,
+    latitude: baselineRow.latitude,
+    longitude: baselineRow.longitude,
   };
 
   const drift = diffBaseline(baseline, live).filter((d) => d.changed);
@@ -121,6 +150,9 @@ async function checkOne(
         phone: live.phone,
         primaryCategory: live.primaryCategory,
         hours: live.hours,
+        businessStatus: live.businessStatus,
+        latitude: live.latitude,
+        longitude: live.longitude,
       }),
       runBy: userId,
     })

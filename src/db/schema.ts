@@ -408,6 +408,10 @@ export const gbpBaselines = sqliteTable(
     phone: text("phone"),
     primaryCategory: text("primary_category"),
     hours: text("hours"), // JSON array of weekday descriptions, Monday first
+    // Snapshotted from the live listing at confirm time (not user-typed)
+    businessStatus: text("business_status"), // OPERATIONAL | CLOSED_TEMPORARILY | CLOSED_PERMANENTLY
+    latitude: real("latitude"),
+    longitude: real("longitude"),
     confirmedBy: text("confirmed_by").references(() => user.id),
     confirmedAt: integer("confirmed_at", { mode: "timestamp" }).notNull(),
     createdAt: createdAt(),

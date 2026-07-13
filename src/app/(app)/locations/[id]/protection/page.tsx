@@ -6,6 +6,8 @@ import { getDb, schema } from "@/db";
 import { requireSession } from "@/lib/session";
 import { fetchPlaceDetails, lookupGbpFromUrl } from "@/lib/places";
 import {
+  businessStatusLabel,
+  formatPin,
   hoursToText,
   parseBaselineHours,
   PROTECTED_FIELDS,
@@ -81,6 +83,13 @@ export default async function ProtectionPage({
     primaryCategory: baseline?.primaryCategory ?? location.primaryCategory ?? "",
     hours: baseline ? hoursToText(parseBaselineHours(baseline.hours)) : "",
   };
+  // Open/closed status + map pin are captured automatically, shown read-only
+  let monitored = baseline
+    ? {
+        status: businessStatusLabel(baseline.businessStatus),
+        pin: formatPin(baseline.latitude, baseline.longitude),
+      }
+    : { status: "—", pin: "—" };
   let prefilledLive = false;
   if (!baseline) {
     const { env } = await getCloudflareContext({ async: true });
@@ -96,6 +105,10 @@ export default async function ProtectionPage({
           phone: result.data.phone ?? "",
           primaryCategory: result.data.primaryCategory ?? "",
           hours: hoursToText(result.data.hours),
+        };
+        monitored = {
+          status: businessStatusLabel(result.data.businessStatus),
+          pin: formatPin(result.data.latitude, result.data.longitude),
         };
         prefilledLive = true;
       }
@@ -252,9 +265,24 @@ export default async function ProtectionPage({
                 placeholder={"Monday: 9:00 AM – 5:00 PM\nTuesday: 9:00 AM – 5:00 PM\n…"}
               />
             </div>
+            <div className="rounded-md bg-gray-50 p-3 text-sm dark:bg-gray-800/50">
+              <p className="mb-1 text-xs font-medium uppercase text-gray-500">
+                Also monitored (captured automatically)
+              </p>
+              <div className="flex flex-wrap gap-x-6 gap-y-1">
+                <span>
+                  Open/closed status:{" "}
+                  <span className="font-medium">{monitored.status}</span>
+                </span>
+                <span>
+                  Map pin: <span className="font-medium">{monitored.pin}</span>
+                </span>
+              </div>
+            </div>
             <p className="text-xs text-gray-500">
-              Fields left blank are not protected. Operator or admin role
-              required to confirm.
+              Fields left blank are not protected. Open/closed status and the
+              map pin are snapshotted from the live listing when you confirm.
+              Operator or admin role required to confirm.
             </p>
             <Button type="submit">
               {baseline ? "Update baseline" : "Confirm baseline"}
