@@ -1,0 +1,390 @@
+{
+  "key": "rank-and-rent",
+  "version": 1,
+  "name": "Rank & Rent Launch Playbook (UK)",
+  "description": "Full lifecycle for a UK rank & rent GBP property: market research, EMD website, GBP build-out, authority, rank tracking, monetisation. IMMUTABLE once used — create v2 for changes.",
+  "phases": [
+    {
+      "key": "p1",
+      "title": "Phase 1 — Market Research & Domain",
+      "description": "Prove the town/niche is worth building before spending anything.",
+      "steps": [
+        {
+          "key": "p1.city-viability",
+          "title": "Confirm the town/niche target",
+          "priority": "p2",
+          "goal": "Only build where there is search demand, a decent average ticket, and beatable competition.",
+          "instructions": "1. Check the target town/city population (aim for 50,000+; smaller can work for high-ticket niches).\n2. Search \"[niche] [town]\" and \"[niche] near me\" in an incognito window. Use the Valentine Chrome extension (or GBP rank grid tool) to simulate searching from inside the town.\n3. Record who holds the map pack top 3 and organic top 3 for both searches.\n4. Note review counts of the top 3 — under ~50 reviews each is a good sign the market is winnable.\n5. Save the findings in the property notes.",
+          "done_when": "Population, top-3 map pack + organic competitors, and their review counts are recorded on the property.",
+          "evidence_required": true
+        },
+        {
+          "key": "p1.competitor-recon",
+          "title": "Competitor recon (top 3 map pack)",
+          "priority": "p2",
+          "goal": "Find the opening. Big review totals with slow monthly velocity is the usual gap — Google rewards momentum, not history.",
+          "instructions": "For each of the top 3 map pack competitors record:\n1. Review total AND review velocity (how many in the last 30 days — sort reviews by newest).\n2. Primary category + secondary categories (use the GMB Everywhere or PlePer Chrome extension).\n3. Whether they post to their profile and how often.\n4. Website depth: one services page, or dedicated service + town pages?\n5. Their weakness: slow velocity? thin site? missing categories? no posts?\nSave the comparison table as evidence.",
+          "done_when": "Competitor table attached as evidence and the identified opening written in the task notes.",
+          "evidence_required": true
+        },
+        {
+          "key": "p1.acquire-emd",
+          "title": "Buy the EMD + hosting",
+          "priority": "p2",
+          "goal": "Exact-match domains (town+niche) carry real weight in maps and organic.",
+          "instructions": "1. On Namecheap search TOWNNICHE.co.uk and NICHETOWN.co.uk (also check .com and .uk). Skip anything priced in the hundreds+.\n2. Buy the domain and set up hosting on the standard stack.\n3. Record in the property notes: domain, registrar, hosting account, renewal date, total cost (target: under £15 up front).",
+          "done_when": "Domain resolves to hosting; domain, logins location and costs recorded.",
+          "evidence_required": false
+        }
+      ]
+    },
+    {
+      "key": "p2",
+      "title": "Phase 2 — Website Build",
+      "description": "Clone the proven base site, localise it completely, and structure it so the site and GBP tell Google the same story.",
+      "steps": [
+        {
+          "key": "p2.clone-site",
+          "title": "Clone the base site",
+          "priority": "p2",
+          "goal": "The base site design is proven — cloning takes ~30 minutes vs days of design.",
+          "instructions": "1. Install WordPress on the new domain.\n2. Use the Migrate Guru plugin to clone the current base site to the new domain.\n3. Log into wp-admin on the new site and confirm all pages, images and forms came across.",
+          "done_when": "Site loads on the new EMD and wp-admin is accessible.",
+          "evidence_required": false
+        },
+        {
+          "key": "p2.search-replace",
+          "title": "Town search & replace",
+          "priority": "p1",
+          "goal": "A single leftover mention of the old town destroys local trust for the new one.",
+          "instructions": "1. Install the Better Search Replace plugin.\n2. Run replacements for EVERY variation of the old town: \"Croydon\", \"Croydon, Surrey\", \"croydon\" (lowercase/slugs), the old postcode areas, and old phone number.\n3. Check page slugs/URLs, title tags and meta descriptions too — not just body text.\n4. Browse every page of the site and use Google \"site:domain old-town\" after indexing to catch stragglers.",
+          "done_when": "Zero instances of the old town anywhere on the site (text, slugs, titles, metas).",
+          "evidence_required": false
+        },
+        {
+          "key": "p2.localise-images",
+          "title": "Localise images & logo",
+          "priority": "p2",
+          "goal": "Images carrying the old town's name undo the search-replace work.",
+          "instructions": "1. Regenerate the logo wording for the new town using ChatGPT Images, then clean the background with remove.bg (ChatGPT usually messes up transparency).\n2. Replace every image that contains old town text.\n3. Rename all image files descriptively before upload: niche-town-service.jpg.\n4. Where possible use photos that look plausibly local.",
+          "done_when": "No image shows the old town; logo shows the new town; filenames are keyworded.",
+          "evidence_required": true
+        },
+        {
+          "key": "p2.page-architecture",
+          "title": "Service + town page architecture",
+          "priority": "p1",
+          "goal": "One service, one location, one page. A single services page ranks for nothing.",
+          "instructions": "1. Core money pages, one per service: /[niche]-[town], /emergency-[niche]-[town], and one page per sub-service (e.g. /[sub-service]-[town]).\n2. For every core page align the signal triangle — URL, title tag and H1 must all say the same service + town:\n   URL: /boiler-repair-croydon\n   Title: Boiler Repair in Croydon | Same-Day Response\n   H1: Boiler Repair for Croydon Homes\n3. The main money page's title tag must match the GBP primary category.\n4. Internally link every sub-service page back to its main service page, and every page to the homepage.",
+          "done_when": "Every core service has its own page with aligned URL/Title/H1 and internal links in place.",
+          "evidence_required": false
+        },
+        {
+          "key": "p2.localise-content",
+          "title": "Localise content with real specifics",
+          "priority": "p2",
+          "goal": "One town-specific detail beats ten generic paragraphs. Google and AI search pull facts, not fluff.",
+          "instructions": "1. Name real neighbourhoods/areas/estates in the body copy (3+ per core page).\n2. Reference local conditions that affect the service (hard water, Victorian housing stock, coastal damp — whatever fits the niche).\n3. Rewrite key sentences as clean facts (Entity–Attribute–Value):\n   \"[Brand] repairs boilers in Croydon homes within 24 hours.\"\n   \"Typical repair costs run £120 to £450.\"\n   \"[Brand] covers CR0 through CR8 postcodes.\"\n   \"Engineers are Gas Safe registered (No. XXXXX).\"\n4. Seed sidebars/footers/FAQ boxes with related-but-contrasting terms (emergency repair main page ↔ scheduled servicing sidebar) so the page covers the whole concept.",
+          "done_when": "Each core page names 3+ real local areas and contains 5+ EAV fact sentences.",
+          "evidence_required": false
+        },
+        {
+          "key": "p2.near-me",
+          "title": "\"Near me\" optimisation",
+          "priority": "p2",
+          "goal": "\"Near me\" terms have higher volume and lower difficulty than town terms — most competitors ignore them.",
+          "instructions": "1. Search \"[service] near me\" simulated from the target town.\n2. Open the top 3 ranking pages with the SEOQuake extension and count: \"near me\" occurrences in body text, occurrences in headers, and which H-level.\n3. Average the top 3 and go slightly above.\n4. Default formula if in doubt: 4× in body text, 2× in headers, at least one of them an H2.\n5. Write them naturally: \"Why Homeowners Near Me Trust Our Team\". No awkward stuffing.",
+          "done_when": "Page meets/beats the top-3 average counts and reads naturally.",
+          "evidence_required": false
+        },
+        {
+          "key": "p2.schema-sameas",
+          "title": "LocalBusiness schema + sameAs entity binding",
+          "priority": "p2",
+          "goal": "sameAs binds the entity in Google's knowledge graph — without it every signal gets half credit.",
+          "instructions": "1. Add LocalBusiness schema to every page with name, phone, URL and the service areas matching the GBP exactly.\n2. Add up to 8 sameAs URLs describing the same business: GBP/Maps URL, Facebook, Yelp UK, a niche directory (e.g. Checkatrade/TrustATrader), Companies House record if registered, LinkedIn, Bing Places, X/Instagram.\n3. Validate with Google's Rich Results Test.",
+          "done_when": "Schema validates with the sameAs set and service areas matching the GBP.",
+          "evidence_required": true
+        },
+        {
+          "key": "p2.conversion",
+          "title": "Conversion above-the-fold",
+          "priority": "p1",
+          "goal": "Rankings don't matter if calls don't happen. Fix conversion before traffic arrives.",
+          "instructions": "1. H1 = service + town.\n2. Oversized tap-to-call button visible without scrolling on mobile.\n3. Star rating / review count visible immediately once reviews exist.\n4. 3-second clarity test: what + where + how fast.\n5. Quote form short and working — test a submission.\n6. Test the whole page on a real phone.",
+          "done_when": "Mobile test passed: call button dials, form submits, page loads fast, H1 correct.",
+          "evidence_required": true
+        },
+        {
+          "key": "p2.gsc-ga",
+          "title": "Search Console + GA4 + rank tracker",
+          "priority": "p1",
+          "goal": "No baseline, no proof of improvement — and GSC verification also unlocks instant GBP verification options.",
+          "instructions": "1. Verify the domain in Google Search Console.\n2. Submit the sitemap and request indexing on every core page.\n3. Connect GA4.\n4. Add the property to the rank tracker (Legiit Command Center / Local Falcon) with the target keyword set.",
+          "done_when": "GSC verified with sitemap submitted, GA4 receiving data, property live in the rank tracker.",
+          "evidence_required": false
+        }
+      ]
+    },
+    {
+      "key": "p3",
+      "title": "Phase 3 — GBP Creation & Full Optimisation",
+      "description": "Create the profile and fill in every relevant field/tag. This is the core asset — do not skip fields.",
+      "steps": [
+        {
+          "key": "p3.create-verify",
+          "title": "Create & verify the profile",
+          "priority": "p1",
+          "goal": "Nothing else matters until the profile is verified and clean.",
+          "instructions": "1. Set up the GBP for the chosen map location via the standard supplier process.\n2. Complete verification (video verification is now the common route in the UK).\n3. Search Maps for the business name, phone and address variants to confirm no duplicate listing exists.\n4. Record the profile URL and CID on the property.",
+          "done_when": "Profile verified and live, GBP URL recorded, no duplicates found.",
+          "evidence_required": true
+        },
+        {
+          "key": "p3.business-name",
+          "title": "Business name",
+          "priority": "p1",
+          "goal": "GBP name, website logo and site footer must tell one story — mismatches kill trust; stuffing risks suspension.",
+          "instructions": "1. Set the GBP name to the exact brand name used on the website and logo.\n2. No extra keywords or towns beyond what the brand name itself contains.\n3. Confirm the site logo, footer and schema all use the identical name.",
+          "done_when": "GBP name = logo = footer = schema, character for character.",
+          "evidence_required": true
+        },
+        {
+          "key": "p3.primary-category",
+          "title": "Primary category",
+          "priority": "p1",
+          "goal": "The single strongest ranking field on the profile.",
+          "instructions": "1. Check what primary category the map pack top 3 use for the money keyword (GMB Everywhere shows it).\n2. Set the primary category to the exact category that matches the main money service.\n3. Confirm the money page title tag on the site matches this category.",
+          "done_when": "Primary category matches the top-3 pattern and the site's money page title.",
+          "evidence_required": true
+        },
+        {
+          "key": "p3.secondary-categories",
+          "title": "Secondary categories",
+          "priority": "p2",
+          "goal": "Missing categories exclude the profile from whole query classes; irrelevant ones dilute it.",
+          "instructions": "1. For every real sub-service, add the matching secondary category if one exists.\n2. Remove anything irrelevant.\n3. Note the final category list in the change log.",
+          "done_when": "Every sub-service is represented; no irrelevant categories present.",
+          "evidence_required": false
+        },
+        {
+          "key": "p3.service-areas",
+          "title": "Service areas",
+          "priority": "p2",
+          "goal": "Service areas must match the website footer, schema and location pages exactly — Google rewards the consistency.",
+          "instructions": "1. Add the town plus the surrounding towns/areas actually targeted — maximum 20.\n2. Copy the exact same list into the website footer and the LocalBusiness schema.\n3. Check them side by side.",
+          "done_when": "GBP service areas = website footer = schema, verified side by side.",
+          "evidence_required": true
+        },
+        {
+          "key": "p3.phone",
+          "title": "Phone setup (tracking number)",
+          "priority": "p1",
+          "goal": "Without a tracking number you can never prove the property generates calls — which is the whole business.",
+          "instructions": "1. Set the call-tracking number as the Primary Phone.\n2. Add the underlying/local number as an Additional Phone.\n3. Use the same tracking number on the website.\n4. Test-call it and confirm routing.",
+          "done_when": "Tracking number live on GBP + site, test call routed and logged.",
+          "evidence_required": false
+        },
+        {
+          "key": "p3.website-utm",
+          "title": "Website + appointment URLs with UTMs",
+          "priority": "p2",
+          "goal": "Untagged links make GBP traffic invisible in analytics.",
+          "instructions": "1. Website field → the money landing page with ?utm_source=google&utm_medium=organic&utm_campaign=gbp\n2. Appointment URL → the quote/contact page, tagged the same way with utm_content=appointment.\n3. Click both from the live listing to verify they resolve.",
+          "done_when": "Both links live, tagged and click-verified.",
+          "evidence_required": false
+        },
+        {
+          "key": "p3.hours",
+          "title": "Hours + special hours",
+          "priority": "p2",
+          "goal": "\"Closed now\" at the moment of search loses the call.",
+          "instructions": "1. Set opening hours (24/7 if the niche answers around the clock).\n2. Add special hours for any bank holiday within the next 14 days.",
+          "done_when": "Hours live and upcoming bank holidays covered.",
+          "evidence_required": false
+        },
+        {
+          "key": "p3.description",
+          "title": "Business description",
+          "priority": "p2",
+          "goal": "750 characters of relevance — the first ~244 show before \"More\".",
+          "instructions": "1. Use the prepared description from the Content tab (or request one).\n2. Naturally mention the niche, the town, and 2–3 named local areas in the first 244 characters.\n3. No ALL CAPS, no offers, no URLs, no keyword stuffing.\n4. Paste exactly and save.",
+          "done_when": "Approved description live; previous value (if any) logged in the change log.",
+          "evidence_required": true
+        },
+        {
+          "key": "p3.services",
+          "title": "Services with full descriptions",
+          "priority": "p2",
+          "goal": "Services feed relevance for long-tail queries — every site page needs its GBP twin.",
+          "instructions": "1. Add every service under its correct category.\n2. Write each description (up to 1000 characters) for real search intent, matching the corresponding website page.\n3. Include indicative pricing where sensible (from £X).",
+          "done_when": "Every website service page has a matching GBP service with description.",
+          "evidence_required": true
+        },
+        {
+          "key": "p3.attributes",
+          "title": "Attributes",
+          "priority": "p3",
+          "goal": "Attributes appear in search filters and complete the profile.",
+          "instructions": "1. Open Edit profile > More and work through every attribute group offered for the category.\n2. Set everything truthfully applicable (payments accepted, accessibility, on-site services, etc.).\n3. Don't fake any — Google cross-checks.",
+          "done_when": "All applicable attribute groups completed.",
+          "evidence_required": false
+        },
+        {
+          "key": "p3.photos",
+          "title": "Photo set — full, geotagged, keyworded",
+          "priority": "p2",
+          "goal": "Real photos signal a real business; filenames and captions carry service keywords.",
+          "instructions": "1. Upload: square logo, cover photo, 3+ exterior/on-location, 3+ work-in-progress, 3+ team shots. Minimum 720×720, no stock images.\n2. Rename every file before upload: niche-town-service.jpg.\n3. Geotag the images to the service area where the workflow allows.\n4. Assign each to the correct photo category.",
+          "done_when": "11+ real photos live in the correct categories with keyworded filenames.",
+          "evidence_required": true
+        },
+        {
+          "key": "p3.qa-seed",
+          "title": "Q&A seeding",
+          "priority": "p3",
+          "goal": "Unanswered questions get answered by strangers — usually wrongly.",
+          "instructions": "1. Use the 5+ prepared Q&A pairs from the Content tab (pricing factors, response time, areas covered, qualifications, payment methods).\n2. Post questions from a personal account, answer from the business profile.\n3. Answer any existing public questions.",
+          "done_when": "5+ Q&A pairs live and no unanswered public questions remain.",
+          "evidence_required": true
+        },
+        {
+          "key": "p3.consistency-check",
+          "title": "GBP ↔ website consistency cross-check",
+          "priority": "p1",
+          "goal": "The website and the GBP must tell Google the same story — mismatches stall rankings.",
+          "instructions": "1. Open the GBP editor and the website side by side.\n2. Check one by one: name, primary category vs money page title, services list vs site pages, service areas vs footer/schema, phone, URL.\n3. Fix every mismatch (log sensitive ones in the change log first).\n4. Screenshot the pair as evidence.",
+          "done_when": "Zero mismatches remain; screenshot pair attached.",
+          "evidence_required": true
+        }
+      ]
+    },
+    {
+      "key": "p4",
+      "title": "Phase 4 — Authority & Citations",
+      "description": "Prove to Google (and AI search) that this is a real business the local area recognises.",
+      "steps": [
+        {
+          "key": "p4.core-citations",
+          "title": "Core UK citations (50+)",
+          "priority": "p2",
+          "goal": "Consistent NAP across the UK directory ecosystem is boring, non-negotiable trust work.",
+          "instructions": "1. Order the citation package (default supplier: CitationExpert on Legiit) or build manually.\n2. UK core set: Yell, Thomson Local, Scoot, FreeIndex, Cylex UK, Hotfrog UK, 192.com, Bark, plus niche directories (Checkatrade / TrustATrader / Rated People where the niche fits).\n3. NAP must match the master record EXACTLY — same name, same address formatting, same tracking number.\n4. Record every citation URL as evidence.",
+          "done_when": "Citation list with URLs recorded; spot-check of 10 shows exact NAP match.",
+          "evidence_required": true
+        },
+        {
+          "key": "p4.super-citations",
+          "title": "Super citations (Apple Maps, Bing Places, Waze)",
+          "priority": "p2",
+          "goal": "Verified platforms feed AI assistants (ChatGPT, Alexa, in-car navs). Not listed there = not recommended.",
+          "instructions": "1. Apple Business Connect: create and verify the listing, complete every field.\n2. Bing Places: import from GBP or create fresh, fully optimise for the town.\n3. Waze: confirm the pin and details.\n4. These require real verification — that's exactly why they count more.",
+          "done_when": "Apple Maps and Bing Places verified and complete; Waze pin confirmed.",
+          "evidence_required": true
+        },
+        {
+          "key": "p4.social-profiles",
+          "title": "Social profiles",
+          "priority": "p3",
+          "goal": "Entity confirmation + sameAs targets + occasional engagement signals.",
+          "instructions": "1. Order the social profile set (default: Muktesh-Patel on Legiit): Facebook, Instagram, X, LinkedIn, YouTube, Pinterest.\n2. Brand each with the logo, town description and link to the money page.\n3. Add the profile URLs to the website's sameAs schema.",
+          "done_when": "Profiles live, branded, cross-linked, and added to schema.",
+          "evidence_required": true
+        },
+        {
+          "key": "p4.foundation-links",
+          "title": "Foundation links",
+          "priority": "p3",
+          "goal": "The base link layer that every property gets.",
+          "instructions": "1. Order the foundation link package (default: IgniteFirst on Legiit).\n2. Point links at the homepage and the main money page with branded + natural anchors.\n3. Record what was built and where as evidence.",
+          "done_when": "Link list with URLs recorded as evidence.",
+          "evidence_required": true
+        },
+        {
+          "key": "p4.local-trust",
+          "title": "Local trust signals (the overnight movers)",
+          "priority": "p2",
+          "goal": "3–5 genuine local signals beat 50 random backlinks — chamber membership alone has moved profiles several places.",
+          "instructions": "Pick 2–3 that fit the town and niche:\n1. Local Chamber of Commerce membership + directory listing.\n2. FSB (Federation of Small Businesses) membership.\n3. Sponsorship of a local community event, sports club or charity page.\n4. Local council business directory where available.\n5. Supplier / trade 'approved installer' directory pages.\n6. A feature in a local news roundup or press release via a local outlet.",
+          "done_when": "At least 2 local trust signals live with URLs recorded.",
+          "evidence_required": true
+        }
+      ]
+    },
+    {
+      "key": "p5",
+      "title": "Phase 5 — Rank Tracking & Expansion",
+      "description": "See the ranking bubble, then expand it area by area until the whole town is covered.",
+      "steps": [
+        {
+          "key": "p5.baseline-grid",
+          "title": "Baseline rank grid scan",
+          "priority": "p1",
+          "goal": "You rank in a bubble around the pin, not across the town. Without a baseline nothing can be proven later.",
+          "instructions": "1. Before any further changes, run a rank grid scan (Local Falcon / Command Center) across the town for the money keyword AND its \"near me\" variant.\n2. Use a dense grid (121-point where the tool allows).\n3. Save the scan image as evidence and record average rank + top-3 coverage % in the property metrics.",
+          "done_when": "Baseline grid saved as evidence; average rank and top-3 coverage recorded.",
+          "evidence_required": true
+        },
+        {
+          "key": "p5.keyword-targets",
+          "title": "Target keyword & area list",
+          "priority": "p2",
+          "goal": "Chasing the town-centre head term first is a 12-month fight. Win the surrounding areas first.",
+          "instructions": "1. List target keywords: [niche] [town], emergency [niche] [town], each sub-service + town, and the \"near me\" variants.\n2. List the surrounding areas/estates/neighbouring towns, ordered weakest competition first.\n3. Save both lists on the property — this drives the weekly gap-fixing cycle.",
+          "done_when": "Keyword list and prioritised area list saved on the property.",
+          "evidence_required": false
+        },
+        {
+          "key": "p5.gap-fixing",
+          "title": "Zone-by-zone gap fixing (hand off to weekly cycle)",
+          "priority": "p2",
+          "goal": "The lead gap lives in the zones where the grid is red and competitors are weak.",
+          "instructions": "1. Each week, compare the new grid scan against the last one.\n2. Pick the weakest zone with real search volume.\n3. Respond with: an area location page on the site, supporting content that names that area, and internal links back to the money page.\n4. Log which zone was targeted and what was changed — that's the experiment record.\nThis step activates the recurring weekly grid task; it never fully \"completes\".",
+          "done_when": "First zone targeted and documented; weekly rank-grid task running.",
+          "evidence_required": false
+        }
+      ]
+    },
+    {
+      "key": "p6",
+      "title": "Phase 6 — Monetisation",
+      "description": "Turn rankings into revenue and prove payback against the build cost.",
+      "steps": [
+        {
+          "key": "p6.call-routing",
+          "title": "Connect call routing & buyer",
+          "priority": "p1",
+          "goal": "The property earns nothing until calls route somewhere that pays.",
+          "instructions": "1. Route the tracking number to the chosen buyer: a pay-per-lead network, or a local business renting the site.\n2. Make a test call end-to-end and confirm it connects and is logged by the tracker.\n3. Record the payout terms / rental agreement on the property notes.",
+          "done_when": "Test call routed and logged; payout/rental terms recorded.",
+          "evidence_required": false
+        },
+        {
+          "key": "p6.revenue-tracking",
+          "title": "Revenue tracking & payback",
+          "priority": "p2",
+          "goal": "Every property should show calls, revenue and payback vs its ~£200–£400 build cost.",
+          "instructions": "1. Enter the first month's snapshot in the property Metrics: calls, qualified calls, revenue.\n2. Note the total build cost so payback is visible.\n3. This becomes the recurring monthly metrics task.",
+          "done_when": "First monthly snapshot entered with revenue and build cost noted.",
+          "evidence_required": false
+        }
+      ]
+    },
+    {
+      "key": "p7",
+      "title": "Phase 7 — Ongoing Weekly Cycle",
+      "description": "The compounding work. Every week, without skipping steps — this is what separates winning properties from stale ones.",
+      "steps": [
+        {
+          "key": "p7.activate-ops",
+          "title": "Activate the recurring ops cycle",
+          "priority": "p1",
+          "goal": "Reviews stack, posts compound, grid coverage grows — but only if the cycle actually runs weekly.",
+          "instructions": "1. On the property page, click \"Set up standard ops plan\".\n2. This creates the recurring cycle: weekly GBP post, weekly review sweep, weekly profile data check, weekly Q&A check, weekly rank grid scan, monthly photo set, monthly review requests, monthly metrics, monthly GSC check.\n3. Confirm the tasks appear in the queue with due dates.",
+          "done_when": "Recurring tasks created and visible in the task queue.",
+          "evidence_required": false
+        }
+      ]
+    }
+  ]
+}

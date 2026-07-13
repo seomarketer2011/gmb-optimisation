@@ -33,8 +33,8 @@ export default function SignupPage() {
       <Card className="w-full max-w-sm">
         <h1 className="mb-1 text-xl font-semibold">Create account</h1>
         <p className="mb-4 text-sm text-gray-500">
-          The first account created becomes the admin. New accounts default to
-          the VA role until an admin changes them.
+          Single-user tool: only the first account can ever be created, and it
+          becomes the admin. Sign-up closes permanently after that.
         </p>
         <form onSubmit={submit} className="space-y-3">
           <div>

@@ -1,0 +1,46 @@
+{
+  "key": "rank-rent-ops",
+  "version": 1,
+  "description": "Rank & rent recurring ops additions v1. IMMUTABLE once used — create v2 for changes.",
+  "templates": [
+    {
+      "key": "weekly-rank-grid",
+      "title": "Weekly rank grid scan + zone gap review",
+      "task_type": "monitoring",
+      "default_priority": "p2",
+      "default_risk": "low",
+      "approval_required": false,
+      "default_due_days": 7,
+      "recurrence_days": 7,
+      "prepares_content": false,
+      "instructions": "1. Run the rank grid scan (Local Falcon / Command Center) for the money keyword and its \"near me\" variant.\n2. Save the scan image as evidence and note average rank + top-3 coverage %.\n3. Compare against last week's scan: which zones improved, which are still red?\n4. Pick the weakest zone with real search volume and log the fix action for it (area page, supporting content, internal links).\n5. If average rank dropped 3+ positions, escalate — check the profile for suspensions, edits or new competitors before changing anything.",
+      "definition_of_done": "Grid scan attached, average rank + top-3 coverage recorded, one target zone and its fix action logged."
+    },
+    {
+      "key": "monthly-gsc-check",
+      "title": "Monthly Search Console health check",
+      "task_type": "website",
+      "default_priority": "p2",
+      "default_risk": "low",
+      "approval_required": false,
+      "default_due_days": 5,
+      "recurrence_days": 30,
+      "prepares_content": false,
+      "instructions": "1. Open Search Console for the property.\n2. Check Indexing > Pages: all core money pages indexed? Request indexing on any that dropped out.\n3. Check for manual actions or security issues (must be zero).\n4. Review Performance: top queries vs the target keyword list — note new query opportunities for content.\n5. Record impressions and clicks for the month in the task notes.",
+      "definition_of_done": "All core pages indexed, no manual actions, impressions/clicks recorded, any new query opportunities noted."
+    },
+    {
+      "key": "quarterly-citation-audit",
+      "title": "Quarterly citation consistency audit",
+      "task_type": "authority",
+      "default_priority": "p3",
+      "default_risk": "low",
+      "approval_required": false,
+      "default_due_days": 14,
+      "recurrence_days": 90,
+      "prepares_content": false,
+      "instructions": "1. Take the citation list from the property evidence (Phase 4).\n2. Spot-check the top 15 listings: name, address formatting, tracking phone number all still exact?\n3. Fix or request corrections for any drift; log each correction.\n4. Check for new duplicate listings on Yell/Bing/Apple.",
+      "definition_of_done": "Top 15 citations checked, corrections logged, no duplicates found (or escalated)."
+    }
+  ]
+}

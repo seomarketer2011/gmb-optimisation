@@ -37,15 +37,15 @@ export default async function ClientsPage() {
   return (
     <div>
       <PageHeader
-        title="Clients"
-        subtitle="Each client owns one or more GBP locations"
+        title="Niches"
+        subtitle="Each niche groups its city properties (GBP + site)"
       />
       <div className="grid gap-6 md:grid-cols-3">
         <div className="md:col-span-2">
           {rows.length === 0 ? (
             <EmptyState
-              title="No clients yet"
-              hint="Add your first client using the form."
+              title="No niches yet"
+              hint="Add your first niche using the form."
             />
           ) : (
             <Card className="p-0">
@@ -85,17 +85,17 @@ export default async function ClientsPage() {
           )}
         </div>
         <Card>
-          <h2 className="mb-3 font-medium">Add client</h2>
+          <h2 className="mb-3 font-medium">Add niche</h2>
           <form action={createClient} className="space-y-3">
             <div>
-              <Label htmlFor="name">Client name</Label>
+              <Label htmlFor="name">Niche name (e.g. Fire Doors)</Label>
               <Input id="name" name="name" required />
             </div>
             <div>
               <Label htmlFor="notes">Notes</Label>
               <Textarea id="notes" name="notes" rows={3} />
             </div>
-            <Button type="submit">Add client</Button>
+            <Button type="submit">Add niche</Button>
           </form>
         </Card>
       </div>

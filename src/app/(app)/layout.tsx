@@ -4,10 +4,11 @@ import { SignOutButton } from "@/components/sign-out-button";
 
 const nav = [
   { href: "/", label: "Dashboard" },
+  { href: "/gbp", label: "GBP" },
   { href: "/tasks", label: "Tasks" },
   { href: "/content", label: "Content" },
-  { href: "/clients", label: "Clients" },
-  { href: "/locations", label: "Locations" },
+  { href: "/clients", label: "Niches" },
+  { href: "/locations", label: "Properties" },
   { href: "/locations/import", label: "Import" },
 ];
 

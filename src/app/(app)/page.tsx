@@ -30,9 +30,9 @@ export default async function DashboardPage() {
     .where(eq(schema.contentItems.status, "ready"));
 
   const stats = [
-    { label: "Active clients", value: clientCount.value, href: "/clients" },
+    { label: "Active niches", value: clientCount.value, href: "/clients" },
     {
-      label: "Active locations",
+      label: "Properties",
       value: locationCount.value,
       href: "/locations",
     },
@@ -63,9 +63,9 @@ export default async function DashboardPage() {
       {clientCount.value === 0 && (
         <div className="mt-8">
           <EmptyState
-            title="No clients yet"
-            hint="Add your first client, then add or import their locations."
-            action={<LinkButton href="/clients">Add a client</LinkButton>}
+            title="No niches yet"
+            hint="Add your first niche, then add or import its properties."
+            action={<LinkButton href="/clients">Add a niche</LinkButton>}
           />
         </div>
       )}

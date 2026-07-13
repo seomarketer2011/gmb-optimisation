@@ -167,6 +167,12 @@ export default async function LocationDetailPage({
           </Link>
         )}
         <Link
+          href={`/locations/${location.id}/playbook`}
+          className="text-sm font-medium text-blue-600 hover:underline"
+        >
+          Launch playbook
+        </Link>
+        <Link
           href={`/locations/${location.id}/changes`}
           className="text-sm text-blue-600 hover:underline"
         >

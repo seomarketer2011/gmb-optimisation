@@ -22,11 +22,11 @@ export default async function NewLocationPage({
 
   return (
     <div>
-      <PageHeader title="Add location" />
+      <PageHeader title="Add property" />
       <Card>
         <form action={createLocation}>
           <div className="mb-3 max-w-sm">
-            <Label htmlFor="clientId">Client *</Label>
+            <Label htmlFor="clientId">Niche *</Label>
             <Select
               id="clientId"
               name="clientId"
@@ -34,7 +34,7 @@ export default async function NewLocationPage({
               defaultValue={clientId ?? ""}
             >
               <option value="" disabled>
-                Select a client…
+                Select a niche…
               </option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>

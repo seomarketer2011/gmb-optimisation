@@ -32,21 +32,21 @@ export default async function LocationsPage() {
   return (
     <div>
       <PageHeader
-        title="Locations"
-        subtitle="All GBP locations across all clients"
+        title="Properties"
+        subtitle="All rank &amp; rent properties across all niches"
         actions={
           <>
             <LinkButton href="/locations/import" variant="secondary">
               Import CSV
             </LinkButton>
-            <LinkButton href="/locations/new">Add location</LinkButton>
+            <LinkButton href="/locations/new">Add property</LinkButton>
           </>
         }
       />
       {rows.length === 0 ? (
         <EmptyState
-          title="No locations yet"
-          hint="Add one manually or import a CSV of all your locations."
+          title="No properties yet"
+          hint="Add one manually or import a CSV of all your properties."
           action={<LinkButton href="/locations/import">Import CSV</LinkButton>}
         />
       ) : (
@@ -54,8 +54,8 @@ export default async function LocationsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-left text-gray-500 dark:border-gray-700">
-                <th className="px-4 py-3 font-medium">Location</th>
-                <th className="px-4 py-3 font-medium">Client</th>
+                <th className="px-4 py-3 font-medium">Property</th>
+                <th className="px-4 py-3 font-medium">Niche</th>
                 <th className="px-4 py-3 font-medium">Category</th>
                 <th className="px-4 py-3 font-medium">City</th>
                 <th className="px-4 py-3 font-medium">Status</th>

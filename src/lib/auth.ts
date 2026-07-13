@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { count } from "drizzle-orm";
@@ -43,15 +44,19 @@ export async function getAuth() {
     databaseHooks: {
       user: {
         create: {
-          // First registered user becomes the admin; everyone after
-          // defaults to VA until an admin changes their role.
+          // Single-user tool: the first registered account becomes the
+          // admin and sign-up closes permanently after that.
           before: async (u) => {
             const [row] = await db
               .select({ value: count() })
               .from(schema.user);
-            return {
-              data: { ...u, role: row.value === 0 ? "admin" : "va" },
-            };
+            if (row.value > 0) {
+              throw new APIError("FORBIDDEN", {
+                message:
+                  "This is a single-user tool — sign-up is closed. Use the existing account.",
+              });
+            }
+            return { data: { ...u, role: "admin" } };
           },
         },
       },
