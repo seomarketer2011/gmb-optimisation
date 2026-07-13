@@ -112,6 +112,12 @@ export function GbpImportClient({
     ? [
         ["Business name", preview.name],
         ["Primary category", preview.primaryCategory],
+        [
+          "Other categories",
+          preview.secondaryCategories.length
+            ? preview.secondaryCategories.join(" · ")
+            : null,
+        ],
         ["Address", preview.address],
         ["Town", preview.city],
         ["Postcode", preview.postcode],

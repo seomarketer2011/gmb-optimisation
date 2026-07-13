@@ -19,6 +19,17 @@ export function LocationFields({ location }: { location?: Location }) {
           defaultValue={location?.primaryCategory ?? ""}
         />
       </div>
+      <div className="md:col-span-2">
+        <Label htmlFor="secondaryCategories">
+          Secondary categories (comma-separated)
+        </Label>
+        <Input
+          id="secondaryCategories"
+          name="secondaryCategories"
+          placeholder="e.g. Painter, Decorator"
+          defaultValue={location?.secondaryCategories ?? ""}
+        />
+      </div>
       <div>
         <Label htmlFor="address">Address</Label>
         <Input

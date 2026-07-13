@@ -87,11 +87,11 @@ export async function importGbpProperty(
       gbpUrl: data.gbpUrl,
       placeId: data.placeId,
       primaryCategory: data.primaryCategory,
+      secondaryCategories: data.secondaryCategories.join(", ") || null,
       status: "active",
       notes: [
         `Imported from Google Maps (place ID: ${data.placeId}).`,
         data.hours.length ? `Hours:\n${data.hours.join("\n")}` : null,
-        data.types.length ? `Google types: ${data.types.join(", ")}` : null,
       ]
         .filter(Boolean)
         .join("\n\n"),

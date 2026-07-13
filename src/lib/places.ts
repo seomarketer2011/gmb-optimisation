@@ -15,11 +15,57 @@ export type GbpLookupResult = {
   website: string | null;
   gbpUrl: string;
   primaryCategory: string | null;
-  types: string[];
+  secondaryCategories: string[]; // cleaned, human-readable (umbrella tags removed)
+  types: string[]; // raw Google type ids, for reference
   rating: number | null;
   reviewCount: number | null;
   hours: string[];
 };
+
+// Generic umbrella tags Google adds to nearly every listing — they carry no
+// category signal, so we hide them from the human-facing category list.
+const UMBRELLA_TYPES = new Set([
+  "point_of_interest",
+  "establishment",
+  "service",
+  "geocode",
+  "premise",
+  "subpremise",
+  "plus_code",
+  "food", // redundant with the specific "*_restaurant" type
+]);
+
+/** "roofing_contractor" -> "Roofing Contractor" */
+export function prettifyType(t: string): string {
+  return t
+    .split("_")
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
+/**
+ * Turn Google's raw `types` array into a clean secondary-category list:
+ * drop the umbrella tags and the primary type (already shown separately),
+ * prettify the rest.
+ */
+function deriveSecondaryCategories(
+  types: string[],
+  primaryType: string | undefined,
+  primaryDisplay: string | null,
+): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const t of types) {
+    if (UMBRELLA_TYPES.has(t)) continue;
+    if (primaryType && t === primaryType) continue;
+    const pretty = prettifyType(t);
+    if (pretty === primaryDisplay) continue;
+    if (seen.has(pretty)) continue;
+    seen.add(pretty);
+    out.push(pretty);
+  }
+  return out;
+}
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36";
@@ -88,6 +134,7 @@ type PlaceResource = {
   }>;
   nationalPhoneNumber?: string;
   websiteUri?: string;
+  primaryType?: string;
   primaryTypeDisplayName?: { text?: string };
   types?: string[];
   rating?: number;
@@ -108,6 +155,7 @@ const PLACE_FIELDS = [
   "addressComponents",
   "nationalPhoneNumber",
   "websiteUri",
+  "primaryType",
   "primaryTypeDisplayName",
   "types",
   "rating",
@@ -135,6 +183,11 @@ function mapPlace(
     website: place.websiteUri ?? null,
     gbpUrl: place.googleMapsUri ?? fallbackUrl,
     primaryCategory: place.primaryTypeDisplayName?.text ?? null,
+    secondaryCategories: deriveSecondaryCategories(
+      place.types ?? [],
+      place.primaryType,
+      place.primaryTypeDisplayName?.text ?? null,
+    ),
     types: place.types ?? [],
     rating: place.rating ?? null,
     reviewCount: place.userRatingCount ?? null,
