@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { asc } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import { requireSession } from "@/lib/session";
@@ -17,10 +18,20 @@ export default async function ImportGbpPage() {
   return (
     <div>
       <PageHeader
-        title="Import from GBP URL"
-        subtitle="Paste any Google Maps link — share link, full Maps URL or g.page link — and the live profile data self-populates a new property"
+        title="Add a property from Google"
+        subtitle="Type a business name to find its live Google listing and pick it — or paste a Maps link. The profile data self-populates a new property."
       />
       <GbpImportClient niches={niches} />
+      <p className="mt-6 text-sm text-gray-500">
+        Adding lots at once?{" "}
+        <Link
+          href="/locations/import"
+          className="text-blue-600 hover:underline"
+        >
+          Bulk-import from a CSV
+        </Link>
+        .
+      </p>
     </div>
   );
 }

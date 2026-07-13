@@ -10,7 +10,7 @@ const nav = [
   { href: "/clients", label: "Niches" },
   { href: "/locations", label: "Properties" },
   { href: "/protection", label: "Protection" },
-  { href: "/locations/import", label: "Import" },
+  { href: "/locations/import-gbp", label: "Add property" },
 ];
 
 export default async function AppLayout({

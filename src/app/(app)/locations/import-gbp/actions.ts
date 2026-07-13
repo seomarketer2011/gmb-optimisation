@@ -4,16 +4,25 @@ import { revalidatePath } from "next/cache";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb, schema } from "@/db";
 import { requireSession } from "@/lib/session";
-import { lookupGbpFromUrl, type GbpLookupResult } from "@/lib/places";
+import {
+  fetchPlaceDetails,
+  lookupGbpFromUrl,
+  searchPlacesByName,
+  type GbpLookupResult,
+  type PlaceCandidate,
+} from "@/lib/places";
 
 export type LookupResponse =
   | { ok: true; data: GbpLookupResult }
   | { ok: false; error: string };
 
-export async function lookupGbp(url: string): Promise<LookupResponse> {
-  await requireSession();
-  if (!url?.trim()) return { ok: false, error: "Paste a Maps or share URL." };
+export type SearchResponse =
+  | { ok: true; data: PlaceCandidate[] }
+  | { ok: false; error: string };
 
+async function requireApiKey(): Promise<
+  { ok: true; apiKey: string } | { ok: false; error: string }
+> {
   const { env } = await getCloudflareContext({ async: true });
   const apiKey = env.GOOGLE_MAPS_API_KEY;
   if (!apiKey) {
@@ -23,7 +32,38 @@ export async function lookupGbp(url: string): Promise<LookupResponse> {
         "Google Maps API key is not configured yet. Add the GOOGLE_MAPS_API_KEY secret (see README) and this will light up.",
     };
   }
-  return lookupGbpFromUrl(url, apiKey);
+  return { ok: true, apiKey };
+}
+
+/** Search Google by business name — returns a picklist of matching listings. */
+export async function searchGbp(query: string): Promise<SearchResponse> {
+  await requireSession();
+  if (!query?.trim() || query.trim().length < 3) return { ok: true, data: [] };
+
+  const key = await requireApiKey();
+  if (!key.ok) return key;
+  return searchPlacesByName(query, key.apiKey);
+}
+
+/** Pull full profile data for a picked search result. */
+export async function lookupGbpByPlaceId(
+  placeId: string,
+): Promise<LookupResponse> {
+  await requireSession();
+  if (!placeId) return { ok: false, error: "No listing selected." };
+
+  const key = await requireApiKey();
+  if (!key.ok) return key;
+  return fetchPlaceDetails(placeId, key.apiKey);
+}
+
+export async function lookupGbp(url: string): Promise<LookupResponse> {
+  await requireSession();
+  if (!url?.trim()) return { ok: false, error: "Paste a Maps or share URL." };
+
+  const key = await requireApiKey();
+  if (!key.ok) return key;
+  return lookupGbpFromUrl(url, key.apiKey);
 }
 
 export async function importGbpProperty(

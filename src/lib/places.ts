@@ -142,6 +142,55 @@ function mapPlace(
   };
 }
 
+export type PlaceCandidate = {
+  placeId: string;
+  name: string;
+  address: string | null;
+  primaryCategory: string | null;
+};
+
+/**
+ * Search Google for a business by name (and optionally town/postcode) and
+ * return a short list of matching listings to pick from — the "type the name,
+ * see matches, select one" flow. Selecting a candidate then pulls full data
+ * via fetchPlaceDetails(placeId).
+ */
+export async function searchPlacesByName(
+  query: string,
+  apiKey: string,
+): Promise<
+  { ok: true; data: PlaceCandidate[] } | { ok: false; error: string }
+> {
+  const textQuery = query.trim();
+  if (textQuery.length < 3) return { ok: true, data: [] };
+
+  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask":
+        "places.id,places.displayName,places.formattedAddress,places.primaryTypeDisplayName",
+    },
+    body: JSON.stringify({ textQuery, pageSize: 8, regionCode: "GB" }),
+  });
+
+  const json = (await res.json()) as PlacesTextSearchResponse;
+  if (!res.ok) {
+    return {
+      ok: false,
+      error: `Places API error: ${json.error?.message ?? res.status}`,
+    };
+  }
+  const data = (json.places ?? []).map((p) => ({
+    placeId: p.id,
+    name: p.displayName?.text ?? "(unnamed)",
+    address: p.formattedAddress ?? null,
+    primaryCategory: p.primaryTypeDisplayName?.text ?? null,
+  }));
+  return { ok: true, data };
+}
+
 export async function lookupGbpFromUrl(
   inputUrl: string,
   apiKey: string,
