@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb, schema } from "@/db";
+import { str } from "@/lib/form";
 import { requireRole, requireSession } from "@/lib/session";
 
 const OPEN_STATUSES = ["backlog", "todo", "in_progress", "waiting", "blocked"];
@@ -20,11 +21,6 @@ const DIRECT_STATUSES = [
   "validated",
   "rejected",
 ];
-
-function str(v: FormDataEntryValue | null): string | null {
-  const s = String(v ?? "").trim();
-  return s === "" ? null : s;
-}
 
 function revalidateTask(taskId: string, locationId?: string) {
   revalidatePath("/tasks");
@@ -211,6 +207,28 @@ export async function completeTask(
       completedAt: new Date(),
     })
     .where(eq(schema.tasks.id, taskId));
+
+  // Completing a data-protection restore task resolves its alert, so the
+  // alert and task never disagree about whether the incident is handled
+  const [linkedAlert] = await db
+    .update(schema.integrityAlerts)
+    .set({
+      status: "resolved",
+      resolvedBy: session.user.id,
+      resolvedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(schema.integrityAlerts.taskId, taskId),
+        eq(schema.integrityAlerts.status, "open"),
+      ),
+    )
+    .returning({ locationId: schema.integrityAlerts.locationId });
+  if (linkedAlert) {
+    revalidatePath("/protection");
+    revalidatePath(`/locations/${linkedAlert.locationId}/protection`);
+    revalidatePath(`/locations/${linkedAlert.locationId}`);
+  }
 
   let nextTaskId: string | null = null;
   if (scheduleNext && task.templateId) {

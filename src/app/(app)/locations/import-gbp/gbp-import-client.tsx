@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, Input, Label, Select } from "@/components/ui";
+import { Button, Card, Input, Label, Select, tabClass } from "@/components/ui";
 import type { GbpLookupResult, PlaceCandidate } from "@/lib/places";
 import {
   importGbpProperty,
@@ -35,20 +35,36 @@ export function GbpImportClient({
   const [busy, start] = useTransition();
   const seq = useRef(0);
 
+  // State transitions happen in the change handler (per React guidance);
+  // the effect below only owns the debounced fetch itself.
+  function onQueryChange(value: string) {
+    setQuery(value);
+    if (value.trim().length < 3) {
+      // Invalidate any in-flight request too, or its late response would
+      // repopulate the list under a too-short query
+      seq.current++;
+      setResults([]);
+      setSearched(false);
+      setSearching(false);
+      setError(null);
+    } else {
+      setSearching(true);
+    }
+  }
+
   // Debounced live search as you type (min 3 chars)
   useEffect(() => {
     if (mode !== "name") return;
     const q = query.trim();
-    if (q.length < 3) {
-      setResults([]);
-      setSearched(false);
-      setSearching(false);
-      return;
-    }
-    setSearching(true);
+    if (q.length < 3) return;
     const mine = ++seq.current;
     const t = setTimeout(async () => {
-      const res = await searchGbp(q);
+      let res: Awaited<ReturnType<typeof searchGbp>>;
+      try {
+        res = await searchGbp(q);
+      } catch {
+        res = { ok: false, error: "Search failed — check your connection and try again." };
+      }
       if (mine !== seq.current) return; // a newer keystroke superseded this
       setSearching(false);
       setSearched(true);
@@ -141,11 +157,7 @@ export function GbpImportClient({
         setMode(key);
         reset();
       }}
-      className={`rounded-md px-3 py-1.5 text-sm ${
-        mode === key
-          ? "bg-blue-600 text-white"
-          : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-      }`}
+      className={tabClass(mode === key)}
     >
       {label}
     </button>
@@ -165,7 +177,7 @@ export function GbpImportClient({
             id="q"
             placeholder="Start typing a business name, e.g. Brighton Plumbing…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => onQueryChange(e.target.value)}
             autoFocus
           />
           <p className="mt-2 text-xs text-gray-500">

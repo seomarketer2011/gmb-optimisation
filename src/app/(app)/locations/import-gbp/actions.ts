@@ -1,9 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb, schema } from "@/db";
-import { requireSession } from "@/lib/session";
+import { getGoogleMapsKey, MISSING_KEY_ERROR } from "@/lib/google-key";
+import { requireRole, requireSession } from "@/lib/session";
 import {
   fetchPlaceDetails,
   lookupGbpFromUrl,
@@ -23,15 +23,8 @@ export type SearchResponse =
 async function requireApiKey(): Promise<
   { ok: true; apiKey: string } | { ok: false; error: string }
 > {
-  const { env } = await getCloudflareContext({ async: true });
-  const apiKey = env.GOOGLE_MAPS_API_KEY;
-  if (!apiKey) {
-    return {
-      ok: false,
-      error:
-        "Google Maps API key is not configured yet. Add the GOOGLE_MAPS_API_KEY secret (see README) and this will light up.",
-    };
-  }
+  const apiKey = await getGoogleMapsKey();
+  if (!apiKey) return { ok: false, error: MISSING_KEY_ERROR };
   return { ok: true, apiKey };
 }
 
@@ -70,8 +63,18 @@ export async function importGbpProperty(
   data: GbpLookupResult,
   clientId: string,
 ): Promise<{ ok: true; locationId: string } | { ok: false; error: string }> {
-  const session = await requireSession();
+  // Creating a property is operator work, same as createLocation/CSV import
+  const session = await requireRole("admin", "operator");
   if (!clientId) return { ok: false, error: "Pick a niche first." };
+  // The preview round-trips through the browser — never trust its shape
+  if (!data?.name?.trim() || !data.placeId) {
+    return { ok: false, error: "Listing data is incomplete — fetch it again." };
+  }
+  const hours = Array.isArray(data.hours) ? data.hours : [];
+  const secondaryCategories = Array.isArray(data.secondaryCategories)
+    ? data.secondaryCategories
+    : [];
+  const types = Array.isArray(data.types) ? data.types : [];
   const db = await getDb();
 
   const [loc] = await db
@@ -87,11 +90,14 @@ export async function importGbpProperty(
       gbpUrl: data.gbpUrl,
       placeId: data.placeId,
       primaryCategory: data.primaryCategory,
-      secondaryCategories: data.secondaryCategories.join(", ") || null,
+      secondaryCategories: secondaryCategories.join(", ") || null,
       status: "active",
       notes: [
         `Imported from Google Maps (place ID: ${data.placeId}).`,
-        data.hours.length ? `Hours:\n${data.hours.join("\n")}` : null,
+        hours.length ? `Hours:\n${hours.join("\n")}` : null,
+        // Raw type ids kept for auditability — secondary_categories is a
+        // prettified, lossy subset
+        types.length ? `Google types: ${types.join(", ")}` : null,
       ]
         .filter(Boolean)
         .join("\n\n"),

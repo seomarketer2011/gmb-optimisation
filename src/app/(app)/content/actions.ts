@@ -4,12 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
+import { str } from "@/lib/form";
 import { requireRole, requireSession } from "@/lib/session";
-
-function str(v: FormDataEntryValue | null): string | null {
-  const s = String(v ?? "").trim();
-  return s === "" ? null : s;
-}
 
 function revalidateContent(id: string, locationId?: string) {
   revalidatePath("/content");

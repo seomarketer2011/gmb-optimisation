@@ -4,12 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
+import { str } from "@/lib/form";
 import { requireRole } from "@/lib/session";
-
-function str(v: FormDataEntryValue | null): string | null {
-  const s = String(v ?? "").trim();
-  return s === "" ? null : s;
-}
 
 export async function createLocation(formData: FormData) {
   await requireRole("admin", "operator");
@@ -28,6 +24,7 @@ export async function createLocation(formData: FormData) {
       phone: str(formData.get("phone")),
       website: str(formData.get("website")),
       gbpUrl: str(formData.get("gbpUrl")),
+      placeId: str(formData.get("placeId")),
       primaryCategory: str(formData.get("primaryCategory")),
       secondaryCategories: str(formData.get("secondaryCategories")),
       serviceAreas: str(formData.get("serviceAreas")),
@@ -54,6 +51,7 @@ export async function updateLocation(locationId: string, formData: FormData) {
       phone: str(formData.get("phone")),
       website: str(formData.get("website")),
       gbpUrl: str(formData.get("gbpUrl")),
+      placeId: str(formData.get("placeId")),
       primaryCategory: str(formData.get("primaryCategory")),
       secondaryCategories: str(formData.get("secondaryCategories")),
       serviceAreas: str(formData.get("serviceAreas")),

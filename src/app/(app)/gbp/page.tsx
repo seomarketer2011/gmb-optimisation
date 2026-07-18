@@ -15,6 +15,7 @@ import {
   EmptyState,
   PageHeader,
   statusBadgeColor,
+  tabClass,
 } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -96,14 +97,7 @@ export default async function GbpHubPage({
 
   const now = new Date();
   const tab = (href: string, label: string, active: boolean) => (
-    <Link
-      href={href}
-      className={`rounded-md px-3 py-1.5 text-sm ${
-        active
-          ? "bg-blue-600 text-white"
-          : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-      }`}
-    >
+    <Link href={href} className={tabClass(active)}>
       {label}
     </Link>
   );

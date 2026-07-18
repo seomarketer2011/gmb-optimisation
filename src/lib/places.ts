@@ -25,16 +25,12 @@ export type GbpLookupResult = {
   hours: string[];
 };
 
-// Generic umbrella tags Google adds to nearly every listing — they carry no
-// category signal, so we hide them from the human-facing category list.
+// Generic umbrella tags Google adds to nearly every business listing — they
+// carry no category signal, so we hide them from the category list.
 const UMBRELLA_TYPES = new Set([
   "point_of_interest",
   "establishment",
   "service",
-  "geocode",
-  "premise",
-  "subpremise",
-  "plus_code",
   "food", // redundant with the specific "*_restaurant" type
 ]);
 
@@ -62,7 +58,10 @@ function deriveSecondaryCategories(
     if (UMBRELLA_TYPES.has(t)) continue;
     if (primaryType && t === primaryType) continue;
     const pretty = prettifyType(t);
-    if (pretty === primaryDisplay) continue;
+    // Case-insensitive: Google display names are sentence case ("Roofing
+    // contractor"), prettifyType produces title case
+    if (primaryDisplay && pretty.toLowerCase() === primaryDisplay.toLowerCase())
+      continue;
     if (seen.has(pretty)) continue;
     seen.add(pretty);
     out.push(pretty);
@@ -153,6 +152,15 @@ type PlacesTextSearchResponse = {
   error?: { message?: string; status?: string };
 };
 
+/** res.json() that survives non-JSON error bodies (proxies, 502 pages). */
+async function safeJson<T>(res: Response): Promise<T | null> {
+  try {
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
 const PLACE_FIELDS = [
   "id",
   "displayName",
@@ -238,11 +246,11 @@ export async function searchPlacesByName(
     body: JSON.stringify({ textQuery, pageSize: 8, regionCode: "GB" }),
   });
 
-  const json = (await res.json()) as PlacesTextSearchResponse;
-  if (!res.ok) {
+  const json = await safeJson<PlacesTextSearchResponse>(res);
+  if (!res.ok || !json) {
     return {
       ok: false,
-      error: `Places API error: ${json.error?.message ?? res.status}`,
+      error: `Places API error: ${json?.error?.message ?? res.status}`,
     };
   }
   const data = (json.places ?? []).map((p) => ({
@@ -291,11 +299,11 @@ export async function lookupGbpFromUrl(
     body: JSON.stringify(body),
   });
 
-  const json = (await res.json()) as PlacesTextSearchResponse;
-  if (!res.ok) {
+  const json = await safeJson<PlacesTextSearchResponse>(res);
+  if (!res.ok || !json) {
     return {
       ok: false,
-      error: `Places API error: ${json.error?.message ?? res.status}`,
+      error: `Places API error: ${json?.error?.message ?? res.status}`,
     };
   }
   const place = json.places?.[0];
@@ -327,14 +335,50 @@ export async function fetchPlaceDetails(
     },
   );
 
-  const json = (await res.json()) as PlaceResource & {
-    error?: { message?: string };
-  };
-  if (!res.ok) {
+  const json = await safeJson<PlaceResource & { error?: { message?: string } }>(
+    res,
+  );
+  if (!res.ok || !json) {
     return {
       ok: false,
-      error: `Places API error: ${json.error?.message ?? res.status}`,
+      error: `Places API error: ${json?.error?.message ?? res.status}`,
     };
   }
-  return { ok: true, data: mapPlace(json, "", "") };
+  // Fallbacks keep the non-empty name/gbpUrl invariant the URL-lookup path
+  // has always guaranteed
+  return {
+    ok: true,
+    data: mapPlace(
+      json,
+      "(unnamed listing)",
+      `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(placeId)}`,
+    ),
+  };
+}
+
+/**
+ * The one place that decides how to reach a property's live listing:
+ * deterministically by stored Place ID, falling back to resolving its GBP
+ * URL via text search. `via` tells the caller how the listing was found so
+ * only verified resolutions get persisted.
+ */
+export async function fetchLiveListing(
+  location: { placeId: string | null; gbpUrl: string | null },
+  apiKey: string,
+): Promise<
+  | { ok: true; data: GbpLookupResult; via: "place_id" | "url" }
+  | { ok: false; error: string }
+> {
+  if (location.placeId) {
+    const result = await fetchPlaceDetails(location.placeId, apiKey);
+    return result.ok ? { ...result, via: "place_id" } : result;
+  }
+  if (location.gbpUrl) {
+    const result = await lookupGbpFromUrl(location.gbpUrl, apiKey);
+    return result.ok ? { ...result, via: "url" } : result;
+  }
+  return {
+    ok: false,
+    error: "No Google place ID or GBP URL on this property.",
+  };
 }

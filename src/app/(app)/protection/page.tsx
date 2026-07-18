@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { asc, desc, eq, inArray } from "drizzle-orm";
+import { asc, eq, inArray, max, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import { requireSession } from "@/lib/session";
+import { getGoogleMapsKey } from "@/lib/google-key";
+import { checkStatusDisplay } from "@/lib/integrity";
 import { Badge, Button, Card, EmptyState, PageHeader } from "@/components/ui";
 import { runAllIntegrityChecks } from "./actions";
 
@@ -11,40 +13,50 @@ export default async function ProtectionOverviewPage() {
   await requireSession();
   const db = await getDb();
 
-  const locations = await db
-    .select({
-      location: schema.locations,
-      nicheName: schema.clients.name,
-    })
-    .from(schema.locations)
-    .innerJoin(schema.clients, eq(schema.locations.clientId, schema.clients.id))
-    .where(inArray(schema.locations.status, ["active", "onboarding"]))
-    .orderBy(asc(schema.clients.name), asc(schema.locations.name));
+  const [locations, baselines, latestChecks, openAlerts, apiKey] =
+    await Promise.all([
+      db
+        .select({
+          location: schema.locations,
+          nicheName: schema.clients.name,
+        })
+        .from(schema.locations)
+        .innerJoin(
+          schema.clients,
+          eq(schema.locations.clientId, schema.clients.id),
+        )
+        .where(inArray(schema.locations.status, ["active", "onboarding"]))
+        .orderBy(asc(schema.clients.name), asc(schema.locations.name)),
+      db
+        .select({ locationId: schema.gbpBaselines.locationId })
+        .from(schema.gbpBaselines),
+      // Latest check per location in SQL — SQLite returns the max-row's
+      // values for bare columns alongside MAX(), so this is one indexed
+      // aggregate instead of loading the whole ever-growing history
+      db
+        .select({
+          locationId: schema.integrityChecks.locationId,
+          status: schema.integrityChecks.status,
+          runAt: max(schema.integrityChecks.runAt),
+        })
+        .from(schema.integrityChecks)
+        .groupBy(schema.integrityChecks.locationId),
+      db
+        .select({
+          locationId: schema.integrityAlerts.locationId,
+          count: sql<number>`count(*)`,
+        })
+        .from(schema.integrityAlerts)
+        .where(eq(schema.integrityAlerts.status, "open"))
+        .groupBy(schema.integrityAlerts.locationId),
+      getGoogleMapsKey(),
+    ]);
 
-  const [baselines, checks, openAlerts] = await Promise.all([
-    db.select().from(schema.gbpBaselines),
-    db
-      .select()
-      .from(schema.integrityChecks)
-      .orderBy(desc(schema.integrityChecks.runAt)),
-    db
-      .select()
-      .from(schema.integrityAlerts)
-      .where(eq(schema.integrityAlerts.status, "open")),
-  ]);
-
-  const baselineByLocation = new Map(baselines.map((b) => [b.locationId, b]));
-  const latestCheck = new Map<string, (typeof checks)[number]>();
-  for (const c of checks) {
-    if (!latestCheck.has(c.locationId)) latestCheck.set(c.locationId, c);
-  }
-  const alertCount = new Map<string, number>();
-  for (const a of openAlerts) {
-    alertCount.set(a.locationId, (alertCount.get(a.locationId) ?? 0) + 1);
-  }
-
+  const hasBaseline = new Set(baselines.map((b) => b.locationId));
+  const latestCheck = new Map(latestChecks.map((c) => [c.locationId, c]));
+  const alertCount = new Map(openAlerts.map((a) => [a.locationId, a.count]));
   const protectedCount = locations.filter(({ location }) =>
-    baselineByLocation.has(location.id),
+    hasBaseline.has(location.id),
   ).length;
 
   return (
@@ -53,13 +65,23 @@ export default async function ProtectionOverviewPage() {
         title="Data protection"
         subtitle="Catches Google suggested edits changing listing data: confirm each property's correct data once, then re-check the live listings against it"
         actions={
-          protectedCount > 0 ? (
+          protectedCount > 0 && apiKey ? (
             <form action={runAllIntegrityChecks}>
               <Button type="submit">Run all checks</Button>
             </form>
           ) : undefined
         }
       />
+
+      {!apiKey && (
+        <Card className="mb-6 border-red-300 dark:border-red-800">
+          <p className="text-sm text-red-700 dark:text-red-400">
+            ⚠ Checks cannot run — the <code>GOOGLE_MAPS_API_KEY</code> secret
+            is not configured. Nothing is being monitored until it is added
+            (see README).
+          </p>
+        </Card>
+      )}
 
       {locations.length === 0 ? (
         <EmptyState
@@ -81,9 +103,9 @@ export default async function ProtectionOverviewPage() {
             </thead>
             <tbody>
               {locations.map(({ location, nicheName }) => {
-                const baseline = baselineByLocation.get(location.id);
                 const check = latestCheck.get(location.id);
                 const alerts = alertCount.get(location.id) ?? 0;
+                const display = check ? checkStatusDisplay(check.status) : null;
                 return (
                   <tr
                     key={location.id}
@@ -99,32 +121,18 @@ export default async function ProtectionOverviewPage() {
                     </td>
                     <td className="px-4 py-3">{nicheName}</td>
                     <td className="px-4 py-3">
-                      {baseline ? (
+                      {hasBaseline.has(location.id) ? (
                         <Badge color="green">confirmed</Badge>
                       ) : (
                         <Badge color="yellow">not confirmed</Badge>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {check ? (
+                      {check && display ? (
                         <span className="flex items-center gap-2">
-                          <Badge
-                            color={
-                              check.status === "ok"
-                                ? "green"
-                                : check.status === "drift"
-                                  ? "red"
-                                  : "yellow"
-                            }
-                          >
-                            {check.status === "ok"
-                              ? "all correct"
-                              : check.status === "drift"
-                                ? "data changed"
-                                : "error"}
-                          </Badge>
+                          <Badge color={display.color}>{display.label}</Badge>
                           <span className="text-xs text-gray-500">
-                            {check.runAt.toISOString().slice(0, 10)}
+                            {check.runAt?.toISOString().slice(0, 10)}
                           </span>
                         </span>
                       ) : (
@@ -143,7 +151,7 @@ export default async function ProtectionOverviewPage() {
                         href={`/locations/${location.id}/protection`}
                         className="text-sm font-medium text-blue-600 hover:underline"
                       >
-                        {baseline ? "Open" : "Protect"} →
+                        {hasBaseline.has(location.id) ? "Open" : "Protect"} →
                       </Link>
                     </td>
                   </tr>

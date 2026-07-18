@@ -73,6 +73,15 @@ export function LocationFields({ location }: { location?: Location }) {
         />
       </div>
       <div>
+        <Label htmlFor="placeId">Google Place ID (pins protection checks)</Label>
+        <Input
+          id="placeId"
+          name="placeId"
+          placeholder="ChIJ…"
+          defaultValue={location?.placeId ?? ""}
+        />
+      </div>
+      <div>
         <Label htmlFor="serviceAreas">Service areas</Label>
         <Input
           id="serviceAreas"

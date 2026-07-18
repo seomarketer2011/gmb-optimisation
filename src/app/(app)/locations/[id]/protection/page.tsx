@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, desc, eq } from "drizzle-orm";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb, schema } from "@/db";
 import { requireSession } from "@/lib/session";
-import { fetchPlaceDetails, lookupGbpFromUrl } from "@/lib/places";
+import { getGoogleMapsKey } from "@/lib/google-key";
+import { fetchLiveListing, type GbpLookupResult } from "@/lib/places";
 import {
   businessStatusLabel,
+  checkStatusDisplay,
+  fieldLabel,
   formatPin,
   hoursToText,
   parseBaselineHours,
-  PROTECTED_FIELDS,
 } from "@/lib/integrity";
 import {
   Badge,
@@ -29,15 +30,14 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const fieldLabel = (key: string) =>
-  PROTECTED_FIELDS.find((f) => f.key === key)?.label ?? key;
-
 export default async function ProtectionPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireSession();
+  const session = await requireSession();
+  const role = (session.user as { role?: string }).role ?? "va";
+  const canEdit = role === "admin" || role === "operator";
   const { id } = await params;
   const db = await getDb();
 
@@ -74,46 +74,43 @@ export default async function ProtectionPage({
       })
     : null;
 
-  // First visit: pre-fill the form from the live listing so confirming is a
-  // review, not data entry. Falls back to the stored property fields.
-  let prefill = {
-    businessName: baseline?.businessName ?? location.name,
-    address: baseline?.address ?? location.address ?? "",
-    phone: baseline?.phone ?? location.phone ?? "",
-    primaryCategory: baseline?.primaryCategory ?? location.primaryCategory ?? "",
-    hours: baseline ? hoursToText(parseBaselineHours(baseline.hours)) : "",
-  };
-  // Open/closed status + map pin are captured automatically, shown read-only
-  let monitored = baseline
-    ? {
-        status: businessStatusLabel(baseline.businessStatus),
-        pin: formatPin(baseline.latitude, baseline.longitude),
-      }
-    : { status: "—", pin: "—" };
-  let prefilledLive = false;
-  if (!baseline) {
-    const { env } = await getCloudflareContext({ async: true });
-    const apiKey = env.GOOGLE_MAPS_API_KEY;
+  // Live fetch only when the operator can act on it: first confirm (prefill
+  // + snapshot), or an existing baseline that still lacks its status/pin
+  // snapshot (pre-snapshot confirms, or Google was unreachable last time)
+  const snapshotMissing =
+    !!baseline && baseline.businessStatus == null && baseline.latitude == null;
+  let live: GbpLookupResult | null = null;
+  if (canEdit && (!baseline || snapshotMissing)) {
+    const apiKey = await getGoogleMapsKey();
     if (apiKey && (location.placeId || location.gbpUrl)) {
-      const result = location.placeId
-        ? await fetchPlaceDetails(location.placeId, apiKey)
-        : await lookupGbpFromUrl(location.gbpUrl!, apiKey);
-      if (result.ok) {
-        prefill = {
-          businessName: result.data.name,
-          address: result.data.address ?? "",
-          phone: result.data.phone ?? "",
-          primaryCategory: result.data.primaryCategory ?? "",
-          hours: hoursToText(result.data.hours),
-        };
-        monitored = {
-          status: businessStatusLabel(result.data.businessStatus),
-          pin: formatPin(result.data.latitude, result.data.longitude),
-        };
-        prefilledLive = true;
-      }
+      const result = await fetchLiveListing(location, apiKey);
+      if (result.ok) live = result.data;
     }
   }
+
+  // One construction, clearest source first: live listing → baseline → record
+  const prefill = {
+    businessName: baseline?.businessName ?? live?.name ?? location.name,
+    address: baseline?.address ?? live?.address ?? location.address ?? "",
+    phone: baseline?.phone ?? live?.phone ?? location.phone ?? "",
+    primaryCategory:
+      baseline?.primaryCategory ??
+      live?.primaryCategory ??
+      location.primaryCategory ??
+      "",
+    hours: baseline
+      ? hoursToText(parseBaselineHours(baseline.hours))
+      : hoursToText(live?.hours ?? []),
+  };
+  const monitored = {
+    status: businessStatusLabel(
+      baseline?.businessStatus ?? live?.businessStatus ?? null,
+    ),
+    pin: formatPin(
+      baseline?.latitude ?? live?.latitude ?? null,
+      baseline?.longitude ?? live?.longitude ?? null,
+    ),
+  };
 
   const confirm = confirmBaseline.bind(null, location.id);
   const runCheck = runIntegrityCheck.bind(null, location.id);
@@ -142,6 +139,21 @@ export default async function ProtectionPage({
           ) : undefined
         }
       />
+
+      {baseline && snapshotMissing && (
+        <Card className="mb-6 border-yellow-300 dark:border-yellow-800">
+          <p className="text-sm text-yellow-800 dark:text-yellow-300">
+            ⚠ Open/closed status and the map pin are <strong>not being
+            monitored yet</strong> for this property — Google couldn&rsquo;t be
+            reached when the baseline was confirmed.
+            {canEdit
+              ? live
+                ? " The live values are shown below — click Update baseline to start monitoring them."
+                : " Google is still unreachable (check the API key), so they can't be captured right now."
+              : " Ask an operator to update the baseline."}
+          </p>
+        </Card>
+      )}
 
       {alerts.length > 0 && (
         <Card className="mb-6 border-red-300 dark:border-red-800">
@@ -174,6 +186,11 @@ export default async function ProtectionPage({
                     <p className="whitespace-pre-line">{a.liveValue}</p>
                   </div>
                 </div>
+                {a.notes && (
+                  <p className="mt-2 whitespace-pre-line text-xs text-gray-500">
+                    {a.notes}
+                  </p>
+                )}
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   {a.taskId && (
                     <Link
@@ -188,19 +205,21 @@ export default async function ProtectionPage({
                       Mark resolved
                     </Button>
                   </form>
-                  <form action={setAlertStatus.bind(null, a.id, "dismissed")}>
-                    <Button type="submit" variant="secondary">
-                      Dismiss
-                    </Button>
-                  </form>
+                  {canEdit && (
+                    <form action={setAlertStatus.bind(null, a.id, "dismissed")}>
+                      <Button type="submit" variant="secondary">
+                        Accept new value
+                      </Button>
+                    </form>
+                  )}
                 </div>
               </div>
             ))}
           </div>
           <p className="mt-3 text-xs text-gray-500">
-            Resolve once Google shows the correct value again. Dismiss
-            (operators) only if the new value is acceptable — and update the
-            baseline below so it stops flagging.
+            Mark resolved once Google shows the correct value again (this also
+            completes the restore task). Accept new value (operators) adopts
+            what Google shows into the baseline and cancels the restore task.
           </p>
         </Card>
       )}
@@ -213,81 +232,129 @@ export default async function ProtectionPage({
           <p className="mb-4 text-sm text-gray-500">
             {baseline ? (
               <>
-                Confirmed{" "}
-                {baseline.confirmedAt.toISOString().slice(0, 10)}
+                Confirmed {baseline.confirmedAt.toISOString().slice(0, 10)}
                 {confirmedByUser ? ` by ${confirmedByUser.name}` : ""}. Every
                 check compares Google&rsquo;s live listing against these
                 values.
               </>
-            ) : prefilledLive ? (
+            ) : live ? (
               "Pre-filled from the live Google listing. Check every field against reality — this becomes the source of truth."
             ) : (
               "Pre-filled from the property record. Check every field against reality — this becomes the source of truth."
             )}
           </p>
-          <form action={confirm} className="space-y-3">
-            <div>
-              <Label htmlFor="businessName">Business name *</Label>
-              <Input
-                id="businessName"
-                name="businessName"
-                defaultValue={prefill.businessName}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="address">Address</Label>
-              <Input
-                id="address"
-                name="address"
-                defaultValue={prefill.address}
-              />
-            </div>
-            <div>
-              <Label htmlFor="phone">Telephone number</Label>
-              <Input id="phone" name="phone" defaultValue={prefill.phone} />
-            </div>
-            <div>
-              <Label htmlFor="primaryCategory">Primary category</Label>
-              <Input
-                id="primaryCategory"
-                name="primaryCategory"
-                defaultValue={prefill.primaryCategory}
-              />
-            </div>
-            <div>
-              <Label htmlFor="hours">Opening hours (one day per line)</Label>
-              <Textarea
-                id="hours"
-                name="hours"
-                rows={7}
-                defaultValue={prefill.hours}
-                placeholder={"Monday: 9:00 AM – 5:00 PM\nTuesday: 9:00 AM – 5:00 PM\n…"}
-              />
-            </div>
-            <div className="rounded-md bg-gray-50 p-3 text-sm dark:bg-gray-800/50">
-              <p className="mb-1 text-xs font-medium uppercase text-gray-500">
-                Also monitored (captured automatically)
-              </p>
-              <div className="flex flex-wrap gap-x-6 gap-y-1">
-                <span>
-                  Open/closed status:{" "}
-                  <span className="font-medium">{monitored.status}</span>
-                </span>
-                <span>
-                  Map pin: <span className="font-medium">{monitored.pin}</span>
-                </span>
+          {canEdit ? (
+            <form action={confirm} className="space-y-3">
+              {/* Snapshot of the live values the operator is looking at —
+                  captured once at first confirm, never silently re-fetched */}
+              {live?.businessStatus && (
+                <input
+                  type="hidden"
+                  name="liveBusinessStatus"
+                  value={live.businessStatus}
+                />
+              )}
+              {live?.latitude != null && live?.longitude != null && (
+                <>
+                  <input
+                    type="hidden"
+                    name="liveLatitude"
+                    value={String(live.latitude)}
+                  />
+                  <input
+                    type="hidden"
+                    name="liveLongitude"
+                    value={String(live.longitude)}
+                  />
+                </>
+              )}
+              <div>
+                <Label htmlFor="businessName">Business name *</Label>
+                <Input
+                  id="businessName"
+                  name="businessName"
+                  defaultValue={prefill.businessName}
+                  required
+                />
               </div>
+              <div>
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  name="address"
+                  defaultValue={prefill.address}
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone">Telephone number</Label>
+                <Input id="phone" name="phone" defaultValue={prefill.phone} />
+              </div>
+              <div>
+                <Label htmlFor="primaryCategory">Primary category</Label>
+                <Input
+                  id="primaryCategory"
+                  name="primaryCategory"
+                  defaultValue={prefill.primaryCategory}
+                />
+              </div>
+              <div>
+                <Label htmlFor="hours">Opening hours (one day per line)</Label>
+                <Textarea
+                  id="hours"
+                  name="hours"
+                  rows={7}
+                  defaultValue={prefill.hours}
+                  placeholder={"Monday: 9:00 AM – 5:00 PM\nTuesday: 9:00 AM – 5:00 PM\n…"}
+                />
+              </div>
+              <div className="rounded-md bg-gray-50 p-3 text-sm dark:bg-gray-800/50">
+                <p className="mb-1 text-xs font-medium uppercase text-gray-500">
+                  Also monitored (captured automatically)
+                </p>
+                <div className="flex flex-wrap gap-x-6 gap-y-1">
+                  <span>
+                    Open/closed status:{" "}
+                    <span className="font-medium">{monitored.status}</span>
+                  </span>
+                  <span>
+                    Map pin:{" "}
+                    <span className="font-medium">{monitored.pin}</span>
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">
+                Fields left blank are not protected. Open/closed status and
+                the map pin are captured from the live listing shown above
+                when you confirm; accepting a later change goes through its
+                alert, never silently.
+              </p>
+              <Button type="submit">
+                {baseline ? "Update baseline" : "Confirm baseline"}
+              </Button>
+            </form>
+          ) : (
+            <div className="space-y-2 text-sm">
+              {[
+                ["Business name", prefill.businessName],
+                ["Address", prefill.address || "—"],
+                ["Telephone number", prefill.phone || "—"],
+                ["Primary category", prefill.primaryCategory || "—"],
+                ["Opening hours", prefill.hours || "—"],
+                ["Open/closed status", monitored.status],
+                ["Map pin", monitored.pin],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <p className="text-xs font-medium uppercase text-gray-500">
+                    {label}
+                  </p>
+                  <p className="whitespace-pre-line">{value}</p>
+                </div>
+              ))}
+              <p className="pt-2 text-xs text-gray-500">
+                Only operators and admins can change the confirmed baseline.
+              </p>
             </div>
-            <p className="text-xs text-gray-500">
-              Fields left blank are not protected. Open/closed status and the
-              map pin are snapshotted from the live listing when you confirm.
-              Operator or admin role required to confirm.
-            </p>
-            <Button type="submit">
-              {baseline ? "Update baseline" : "Confirm baseline"}
-            </Button>
-          </form>
+          )}
         </Card>
 
         <Card>
@@ -309,44 +376,33 @@ export default async function ProtectionPage({
                 </tr>
               </thead>
               <tbody>
-                {checks.map((c) => (
-                  <tr
-                    key={c.id}
-                    className="border-b border-gray-100 last:border-0 dark:border-gray-800"
-                  >
-                    <td className="py-2 pr-3 whitespace-nowrap">
-                      {c.runAt.toISOString().slice(0, 16).replace("T", " ")}
-                    </td>
-                    <td className="py-2 pr-3">
-                      <Badge
-                        color={
-                          c.status === "ok"
-                            ? "green"
-                            : c.status === "drift"
-                              ? "red"
-                              : "yellow"
-                        }
-                      >
-                        {c.status === "ok"
-                          ? "all correct"
-                          : c.status === "drift"
-                            ? "data changed"
-                            : "error"}
-                      </Badge>
-                    </td>
-                    <td className="py-2 text-gray-500">
-                      {c.status === "drift"
-                        ? (c.driftFields ?? "")
-                            .split(",")
-                            .filter(Boolean)
-                            .map(fieldLabel)
-                            .join(", ")
-                        : c.status === "error"
-                          ? c.error
-                          : "—"}
-                    </td>
-                  </tr>
-                ))}
+                {checks.map((c) => {
+                  const display = checkStatusDisplay(c.status);
+                  return (
+                    <tr
+                      key={c.id}
+                      className="border-b border-gray-100 last:border-0 dark:border-gray-800"
+                    >
+                      <td className="py-2 pr-3 whitespace-nowrap">
+                        {c.runAt.toISOString().slice(0, 16).replace("T", " ")}
+                      </td>
+                      <td className="py-2 pr-3">
+                        <Badge color={display.color}>{display.label}</Badge>
+                      </td>
+                      <td className="py-2 text-gray-500">
+                        {c.status === "drift"
+                          ? (c.driftFields ?? "")
+                              .split(",")
+                              .filter(Boolean)
+                              .map(fieldLabel)
+                              .join(", ")
+                          : c.status === "error"
+                            ? c.error
+                            : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}

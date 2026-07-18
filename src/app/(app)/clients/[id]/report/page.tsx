@@ -59,7 +59,10 @@ export default async function ClientReportPage({
   const month =
     sp.month && /^\d{4}-\d{2}$/.test(sp.month)
       ? sp.month
-      : new Date(Date.now() - 15 * 86400000).toISOString().slice(0, 7);
+      : // Server component rendered per request (force-dynamic), so reading
+        // the clock here is per-request, not per-render-cycle
+        // eslint-disable-next-line react-hooks/purity
+        new Date(Date.now() - 15 * 86400000).toISOString().slice(0, 7);
   const { start, end } = monthRange(month);
   const prev = prevMonth(month);
 

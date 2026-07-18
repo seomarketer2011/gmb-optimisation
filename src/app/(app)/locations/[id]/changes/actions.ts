@@ -3,22 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
-import { requireRole, requireSession } from "@/lib/session";
+import { GBP_FIELD_RISK } from "@/lib/integrity";
+import { requireSession } from "@/lib/session";
 
 // Sensitive fields always require approval; a wrong edit here can trigger
-// suspension or tank rankings.
-const FIELD_RISK: Record<string, { risk: string; approval: boolean }> = {
-  business_name: { risk: "high", approval: true },
-  primary_category: { risk: "high", approval: true },
-  address: { risk: "high", approval: true },
-  map_pin: { risk: "high", approval: true },
-  phone: { risk: "medium", approval: true },
-  website: { risk: "medium", approval: true },
-  service_areas: { risk: "medium", approval: true },
-  hours: { risk: "low", approval: false },
-  description: { risk: "low", approval: false },
-  other: { risk: "low", approval: false },
-};
+// suspension or tank rankings. Shared with the protection feature so both
+// grade fields identically.
+const FIELD_RISK = GBP_FIELD_RISK;
 
 export async function proposeChange(locationId: string, formData: FormData) {
   const session = await requireSession();

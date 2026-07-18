@@ -161,6 +161,15 @@ export function statusBadgeColor(status: string): keyof typeof badgeColors {
   }
 }
 
+/** Pill/tab styling shared by every tab row (GBP hub, import page, …). */
+export function tabClass(active: boolean): string {
+  return `rounded-md px-3 py-1.5 text-sm ${
+    active
+      ? "bg-blue-600 text-white"
+      : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+  }`;
+}
+
 export function PageHeader({
   title,
   subtitle,

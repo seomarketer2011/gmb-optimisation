@@ -49,6 +49,9 @@ export default async function MetricsPage({
     .orderBy(desc(schema.metricSnapshots.periodStart));
 
   const add = addMetricSnapshot.bind(null, id);
+  // Server component rendered per request (force-dynamic), so reading the
+  // clock here is per-request, not per-render-cycle
+  // eslint-disable-next-line react-hooks/purity
   const defaultMonth = new Date(Date.now() - 15 * 86400000)
     .toISOString()
     .slice(0, 7);

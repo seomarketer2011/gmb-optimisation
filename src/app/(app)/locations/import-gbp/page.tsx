@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { asc } from "drizzle-orm";
 import { getDb, schema } from "@/db";
-import { requireSession } from "@/lib/session";
+import { requireRole } from "@/lib/session";
 import { PageHeader } from "@/components/ui";
 import { GbpImportClient } from "./gbp-import-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function ImportGbpPage() {
-  await requireSession();
+  await requireRole("admin", "operator");
   const db = await getDb();
   const niches = await db
     .select({ id: schema.clients.id, name: schema.clients.name })
